@@ -36,3 +36,9 @@ Style/RaiseArgs:
 
 Style/ZeroLengthPredicate:
   Enabled: false
+
+Lint/DeprecatedConstants:
+  Enabled: false
+
+Metrics/PerceivedComplexity:
+  Enabled: false
