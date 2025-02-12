@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "miniruby/version"
+require_relative 'miniruby/version'
 
 module MiniRuby
   class Error < StandardError; end
