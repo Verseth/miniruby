@@ -57,6 +57,8 @@ module MiniRuby
           'INTEGER'
         when STRING
           'STRING'
+        when IDENTIFIER
+          'IDENTIFIER'
         when WHILE
           'while'
         when RETURN
@@ -103,6 +105,46 @@ module MiniRuby
       "Token(#{type.inspect}, #{span.inspect}, #{value.inspect})"
     end
 
+    sig { returns(T::Boolean) }
+    def equality_operator?
+      case @type
+      when EQUAL_EQUAL, NOT_EQUAL
+        true
+      else
+        false
+      end
+    end
+
+    sig { returns(T::Boolean) }
+    def additive_operator?
+      case @type
+      when PLUS, MINUS
+        true
+      else
+        false
+      end
+    end
+
+    sig { returns(T::Boolean) }
+    def multiplicative_operator?
+      case @type
+      when STAR, SLASH
+        true
+      else
+        false
+      end
+    end
+
+    sig { returns(T::Boolean) }
+    def comparison_operator?
+      case @type
+      when GREATER, GREATER_EQUAL, LESS, LESS_EQUAL
+        true
+      else
+        false
+      end
+    end
+
     # Converts a token into a human-readable string.
     sig { returns(String) }
     def to_s
@@ -143,7 +185,7 @@ module MiniRuby
         '*'
       when SLASH
         '/'
-      when FLOAT, INTEGER
+      when FLOAT, INTEGER, IDENTIFIER
         value.to_s
       when STRING
         T.cast(value.inspect, String)
@@ -177,6 +219,7 @@ module MiniRuby
         'nil',
         'if',
         'while',
+        'return'
       ],
       T::Set[String],
     )
@@ -228,6 +271,8 @@ module MiniRuby
     FLOAT = :float
     # String literal eg. `"foo"`
     STRING = :string
+    # Identifier eg. `foo`
+    IDENTIFIER = :identifier
 
     # Keyword `false`
     FALSE = :false

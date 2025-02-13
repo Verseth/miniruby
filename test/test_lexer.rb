@@ -38,14 +38,16 @@ module MiniRuby
         Token.new(Token::TRUE, S(P(93), P(96))),
         Token.new(Token::COMMA, S(P(97), P(97))),
         Token.new(Token::NIL, S(P(99), P(101))),
-        Token.new(Token::ERROR, S(P(103), P(108)), 'unexpected identifier: `return`'),
+        Token.new(Token::RETURN, S(P(103), P(108))),
         Token.new(Token::SEMICOLON, S(P(109), P(109))),
         Token.new(Token::WHILE, S(P(111), P(115))),
         Token.new(Token::NEWLINE, S(P(116), P(116))),
         Token.new(Token::IF, S(P(117), P(118))),
+        Token.new(Token::IDENTIFIER, S(P(120), P(122)), 'foo'),
       ]
       input = '  > >= < <= = == != ! "foo\n" / "ba\rr" * "elo\uffe9" + -1, +0.25, 5e9, ' \
-              "5e-20, 14e+9, false, true, nil return; while\nif"
+              "5e-20, 14e+9, false, true, nil return; while\nif foo"
+      assert_equal expected, lex(input)
       assert_equal expected, lex(input)
 
       expected = [
@@ -71,20 +73,20 @@ module MiniRuby
       assert_equal expected, lex('"lol\ugego" 123')
 
       expected = [
-        Token.new(Token::ERROR, S(P(0), P(10)), 'unexpected identifier: `fdg1234fsdf`'),
+        Token.new(Token::IDENTIFIER, S(P(0), P(10)), 'fdg1234fsdf'),
         Token.new(Token::COMMA, S(P(11), P(11))),
         Token.new(Token::INTEGER, S(P(13), P(15)), '123'),
       ]
       assert_equal expected, lex('fdg1234fsdf, 123')
 
       expected = [
-        Token.new(Token::ERROR, S(P(0), P(10)), 'unexpected identifier: `fdg1234fsdf`'),
+        Token.new(Token::IDENTIFIER, S(P(0), P(10)), 'fdg1234fsdf'),
       ]
       assert_equal expected, lex('fdg1234fsdf')
 
       expected = [
         Token.new(Token::INTEGER, S(P(0), P(2)), '123'),
-        Token.new(Token::ERROR, S(P(3), P(5)), 'unexpected identifier: `fge`'),
+        Token.new(Token::IDENTIFIER, S(P(3), P(5)), 'fge'),
       ]
       assert_equal expected, lex('123fge')
 

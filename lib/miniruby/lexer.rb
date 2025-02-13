@@ -222,7 +222,7 @@ module MiniRuby
       value = token_value
       return token(value.to_sym) if Token::KEYWORDS.include?(value)
 
-      token(Token::ERROR, "unexpected identifier: `#{value}`")
+      token(Token::IDENTIFIER, value)
     end
 
     sig { void }
