@@ -163,10 +163,6 @@ module MiniRuby
         return token(Token::END_OF_FILE) unless ok
 
         case char
-        when '{'
-          return token(Token::LBRACE)
-        when '}'
-          return token(Token::RBRACE)
         when ','
           return token(Token::COMMA)
         when ';'
@@ -197,7 +193,9 @@ module MiniRuby
           return token(Token::SLASH)
         when '"'
           return scan_string
-        when ' ', "\n", "\r", "\t"
+        when "\n"
+          return token(Token::NEWLINE)
+        when ' ', "\r", "\t"
           skip_token
           next
         else

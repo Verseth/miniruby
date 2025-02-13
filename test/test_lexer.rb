@@ -7,7 +7,6 @@ module MiniRuby
   class LexerTest < TestCase
     def test_lex
       expected = [
-        Token.new(Token::LBRACE, S(P(0), P(0))),
         Token.new(Token::GREATER, S(P(2), P(2))),
         Token.new(Token::GREATER_EQUAL, S(P(4), P(5))),
         Token.new(Token::LESS, S(P(7), P(7))),
@@ -39,11 +38,14 @@ module MiniRuby
         Token.new(Token::TRUE, S(P(93), P(96))),
         Token.new(Token::COMMA, S(P(97), P(97))),
         Token.new(Token::NIL, S(P(99), P(101))),
-        Token.new(Token::RBRACE, S(P(103), P(103))),
-        Token.new(Token::SEMICOLON, S(P(104), P(104))),
+        Token.new(Token::ERROR, S(P(103), P(108)), 'unexpected identifier: `return`'),
+        Token.new(Token::SEMICOLON, S(P(109), P(109))),
+        Token.new(Token::WHILE, S(P(111), P(115))),
+        Token.new(Token::NEWLINE, S(P(116), P(116))),
+        Token.new(Token::IF, S(P(117), P(118))),
       ]
-      input = '{ > >= < <= = == != ! "foo\n" / "ba\rr" * "elo\uffe9" + -1, +0.25, 5e9, ' \
-              '5e-20, 14e+9, false, true, nil };'
+      input = '  > >= < <= = == != ! "foo\n" / "ba\rr" * "elo\uffe9" + -1, +0.25, 5e9, ' \
+              "5e-20, 14e+9, false, true, nil return; while\nif"
       assert_equal expected, lex(input)
 
       expected = [

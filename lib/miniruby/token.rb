@@ -21,14 +21,12 @@ module MiniRuby
           'END_OF_FILE'
         when ERROR
           'ERROR'
-        when LBRACE
-          '{'
-        when RBRACE
-          '}'
         when COMMA
           ','
         when SEMICOLON
           ';'
+        when NEWLINE
+          'NEWLINE'
         when EQUAL
           '='
         when BANG
@@ -59,6 +57,10 @@ module MiniRuby
           'INTEGER'
         when STRING
           'STRING'
+        when WHILE
+          'while'
+        when RETURN
+          'return'
         when false
           'false'
         when true
@@ -111,14 +113,12 @@ module MiniRuby
         'END_OF_FILE'
       when ERROR
         "<error: #{value}>"
-      when LBRACE
-        '{'
-      when RBRACE
-        '}'
       when COMMA
         ','
       when SEMICOLON
         ';'
+      when NEWLINE
+        'NEWLINE'
       when EQUAL
         '='
       when BANG
@@ -153,6 +153,12 @@ module MiniRuby
         'true'
       when NIL
         'nil'
+      when IF
+        'if'
+      when WHILE
+        'while'
+      when RETURN
+        'return'
       else
         '<invalid>'
       end
@@ -186,14 +192,12 @@ module MiniRuby
     # Holds an error message, means that the string/file could not be
     # successfully processed
     ERROR = :error
-    # Right brace `{`
-    LBRACE = :lbrace
-    # Left brace `}`
-    RBRACE = :rbrace
     # Comma `,`
     COMMA = :comma
     # Semicolon `;`
     SEMICOLON = :semicolon
+    # Newline
+    NEWLINE = :newline
     # Equal `=`
     EQUAL = :equal
     # Bang `!`
@@ -235,5 +239,7 @@ module MiniRuby
     IF = :if
     # Keyword `while`
     WHILE = :while
+    # Keyword `return`
+    RETURN = :return
   end
 end
