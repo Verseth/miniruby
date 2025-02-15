@@ -63,12 +63,16 @@ module MiniRuby
           'while'
         when RETURN
           'return'
-        when false
+        when FALSE
           'false'
-        when true
+        when TRUE
           'true'
         when NIL
           'nil'
+        when END_K
+          'end'
+        when ELSE
+          'else'
         else
           '<invalid>'
         end
@@ -189,9 +193,9 @@ module MiniRuby
         value.to_s
       when STRING
         T.cast(value.inspect, String)
-      when false
+      when FALSE
         'false'
-      when true
+      when TRUE
         'true'
       when NIL
         'nil'
@@ -201,6 +205,10 @@ module MiniRuby
         'while'
       when RETURN
         'return'
+      when END_K
+        'end'
+      when ELSE
+        'else'
       else
         '<invalid>'
       end
@@ -219,7 +227,9 @@ module MiniRuby
         'nil',
         'if',
         'while',
-        'return'
+        'return',
+        'end',
+        'else',
       ],
       T::Set[String],
     )
@@ -286,5 +296,9 @@ module MiniRuby
     WHILE = :while
     # Keyword `return`
     RETURN = :return
+    # Keyword `end`
+    END_K = :end
+    # Keyword `else`
+    ELSE = :else
   end
 end

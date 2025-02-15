@@ -24,9 +24,16 @@ module MiniRuby
         @span = span
       end
 
+      sig { params(other: Object).returns(T::Boolean) }
+      def ==(other)
+        return false unless other.is_a?(self.class)
+
+        @span == other.span
+      end
+
       # Get the Ruby-like representation of the AST
-      sig { abstract.returns(String) }
-      def to_s; end
+      sig { abstract.params(indent: Integer).returns(String) }
+      def to_s(indent = 0); end
 
       # Inspect the AST in the S-expression format
       sig { abstract.params(indent: Integer).returns(String) }
@@ -48,12 +55,12 @@ module MiniRuby
       def ==(other)
         return false unless other.is_a?(InvalidNode)
 
-        token == other.token
+        @span == other.span && @token == other.token
       end
 
-      sig { override.returns(String) }
-      def to_s
-        "<invalid: `#{token}`>"
+      sig { override.params(indent: Integer).returns(String) }
+      def to_s(indent = 0)
+        "#{INDENT_UNIT * indent}<invalid: `#{token}`>"
       end
 
       sig { override.params(indent: Integer).returns(String) }
@@ -77,15 +84,15 @@ module MiniRuby
       def ==(other)
         return false unless other.is_a?(ProgramNode)
 
-        @statements == other.statements
+        @span == other.span && @statements == other.statements
       end
 
-      sig { override.returns(String) }
-      def to_s
+      sig { override.params(indent: Integer).returns(String) }
+      def to_s(indent = 0)
         buffer = String.new
 
         @statements.each do |stmt|
-          buffer << stmt
+          buffer << stmt.to_s(indent + 1)
         end
 
         buffer
@@ -97,10 +104,9 @@ module MiniRuby
 
         buff << "#{INDENT_UNIT * indent}(program"
         @statements.each do |stmt|
-          buff << "\n"
-          buff << stmt.inspect(indent + 1)
+          buff << "\n" << stmt.inspect(indent + 1)
         end
-        buff << ')'
+        buff << "#{INDENT_UNIT * indent})"
         buff
       end
     end
@@ -125,12 +131,12 @@ module MiniRuby
       def ==(other)
         return false unless other.is_a?(ExpressionStatementNode)
 
-        @expression == other.expression
+        @span == other.span && @expression == other.expression
       end
 
-      sig { override.returns(String) }
-      def to_s
-        "#{@expression}\n"
+      sig { override.params(indent: Integer).returns(String) }
+      def to_s(indent = 0)
+        "#{INDENT_UNIT * indent}#{@expression}\n"
       end
 
       sig { override.params(indent: Integer).returns(String) }
@@ -168,14 +174,15 @@ module MiniRuby
       def ==(other)
         return false unless other.is_a?(BinaryExpressionNode)
 
-        @operator == other.operator &&
+        @span == other.span &&
+          @operator == other.operator &&
           @left == other.left &&
           @right == other.right
       end
 
-      sig { override.returns(String) }
-      def to_s
-        "#{@left} #{@operator} #{@right}"
+      sig { override.params(indent: Integer).returns(String) }
+      def to_s(indent = 0)
+        "#{INDENT_UNIT * indent}#{@left} #{@operator} #{@right}"
       end
 
       sig { override.params(indent: Integer).returns(String) }
@@ -187,7 +194,7 @@ module MiniRuby
         buff << "\n" << @left.inspect(indent + 1)
         buff << "\n" << @right.inspect(indent + 1)
 
-        buff << ')'
+        buff << "#{INDENT_UNIT * indent})"
         buff
       end
     end
@@ -207,12 +214,12 @@ module MiniRuby
       def ==(other)
         return false unless other.is_a?(IdentifierNode)
 
-        @value == other.value
+        @span == other.span && @value == other.value
       end
 
-      sig { override.returns(String) }
-      def to_s
-        @value
+      sig { override.params(indent: Integer).returns(String) }
+      def to_s(indent = 0)
+        "#{INDENT_UNIT * indent}#{@value}"
       end
 
       sig { override.params(indent: Integer).returns(String) }
@@ -240,13 +247,14 @@ module MiniRuby
       def ==(other)
         return false unless other.is_a?(AssignmentExpressionNode)
 
-        @target == other.target &&
+        @span == other.span &&
+          @target == other.target &&
           @value == other.value
       end
 
-      sig { override.returns(String) }
-      def to_s
-        "#{@target} = #{@value}"
+      sig { override.params(indent: Integer).returns(String) }
+      def to_s(indent = 0)
+        "#{INDENT_UNIT * indent}#{@target} = #{@value}"
       end
 
       sig { override.params(indent: Integer).returns(String) }
@@ -257,7 +265,7 @@ module MiniRuby
         buff << "\n" << @target.inspect(indent + 1)
         buff << "\n" << @value.inspect(indent + 1)
 
-        buff << ')'
+        buff << "#{INDENT_UNIT * indent})"
         buff
       end
     end
@@ -281,13 +289,14 @@ module MiniRuby
       def ==(other)
         return false unless other.is_a?(UnaryExpressionNode)
 
-        @operator == other.operator &&
+        @span == other.span &&
+          @operator == other.operator &&
           @value == other.value
       end
 
-      sig { override.returns(String) }
-      def to_s
-        "#{@operator}#{@value}"
+      sig { override.params(indent: Integer).returns(String) }
+      def to_s(indent = 0)
+        "#{INDENT_UNIT * indent}#{@operator}#{@value}"
       end
 
       sig { override.params(indent: Integer).returns(String) }
@@ -298,7 +307,7 @@ module MiniRuby
         buff << "\n" << @operator.to_s
         buff << "\n" << @value.inspect(indent + 1)
 
-        buff << ')'
+        buff << "#{INDENT_UNIT * indent})"
         buff
       end
     end
@@ -318,12 +327,12 @@ module MiniRuby
       def ==(other)
         return false unless other.is_a?(ReturnExpressionNode)
 
-        @value == other.value
+        @span == other.span && @value == other.value
       end
 
-      sig { override.returns(String) }
-      def to_s
-        "return #{@value}"
+      sig { override.params(indent: Integer).returns(String) }
+      def to_s(indent = 0)
+        "#{INDENT_UNIT * indent}return #{@value}"
       end
 
       sig { override.params(indent: Integer).returns(String) }
@@ -332,16 +341,158 @@ module MiniRuby
       end
     end
 
-    # Represents a false literal eg. `false`
-    class FalseLiteralNode < ExpressionNode
-      sig { params(other: Object).returns(T::Boolean) }
-      def ==(other)
-        other.is_a?(FalseLiteralNode)
+     # Represents an if expression like `if foo; a = 5; end`
+     class IfExpressionNode < ExpressionNode
+      sig { returns(ExpressionNode) }
+      attr_reader :condition
+
+      sig { returns(T::Array[StatementNode]) }
+      attr_reader :then_body
+
+      sig { returns(T.nilable(T::Array[StatementNode])) }
+      attr_reader :else_body
+
+      sig do
+        params(
+          span: Span,
+          cond: ExpressionNode,
+          then_body: T::Array[StatementNode],
+          else_body: T.nilable(T::Array[StatementNode]),
+        ).void
+      end
+      def initialize(span, cond, then_body, else_body = nil)
+        @span = span
+        @condition = cond
+        @then_body = then_body
+        @else_body = else_body
       end
 
-      sig { override.returns(String) }
-      def to_s
-        'false'
+      sig { params(other: Object).returns(T::Boolean) }
+      def ==(other)
+        return false unless other.is_a?(IfExpressionNode)
+
+        @span == other.span &&
+          @condition == other.condition &&
+          @then_body == other.then_body &&
+          @else_body == other.else_body
+      end
+
+      sig { override.params(indent: Integer).returns(String) }
+      def to_s(indent = 0)
+        buff = String.new
+        indent_str = INDENT_UNIT * indent
+        buff << "#{indent_str}if #{@condition}\n"
+
+        @then_body.each do |stmt|
+          buff << stmt.to_s(indent + 1)
+        end
+
+        els = @else_body
+        if els
+          buff << "#{indent_str}else\n"
+          els.each do |stmt|
+            buff << stmt.to_s(indent + 1)
+          end
+        end
+        buff << "#{indent_str}end"
+
+        buff
+      end
+
+      sig { override.params(indent: Integer).returns(String) }
+      def inspect(indent = 0)
+        buff = String.new
+        buff << "#{INDENT_UNIT * indent}(if"
+
+        buff << "\n" << @condition.inspect(indent + 1)
+
+        buff << "#{INDENT_UNIT * (indent + 1)}(then"
+        @then_body.each do |stmt|
+          buff << "\n" << stmt.inspect(indent + 2)
+        end
+        buff << "#{INDENT_UNIT * (indent + 1)})"
+
+        els = @else_body
+        if els
+          buff << "#{INDENT_UNIT * (indent + 1)}(else"
+          els.each do |stmt|
+            buff << "\n" << stmt.inspect(indent + 2)
+          end
+          buff << "#{INDENT_UNIT * (indent + 1)})"
+        end
+
+        buff << "#{INDENT_UNIT * indent})"
+        buff
+      end
+    end
+
+    class WhileExpressionNode < ExpressionNode
+      sig { returns(ExpressionNode) }
+      attr_reader :condition
+
+      sig { returns(T::Array[StatementNode]) }
+      attr_reader :then_body
+
+      sig do
+        params(
+          span: Span,
+          cond: ExpressionNode,
+          then_body: T::Array[StatementNode],
+        ).void
+      end
+      def initialize(span, cond, then_body)
+        @span = span
+        @condition = cond
+        @then_body = then_body
+      end
+
+      sig { params(other: Object).returns(T::Boolean) }
+      def ==(other)
+        return false unless other.is_a?(WhileExpressionNode)
+
+        @span == other.span &&
+          @condition == other.condition &&
+          @then_body == other.then_body
+      end
+
+      sig { override.params(indent: Integer).returns(String) }
+      def to_s(indent = 0)
+        buff = String.new
+        indent_str = INDENT_UNIT * indent
+        buff << "#{indent_str}while #{@condition}\n"
+
+        @then_body.each do |stmt|
+          buff << stmt.to_s(indent + 1)
+        end
+
+        buff << "#{indent_str}end"
+
+        buff
+      end
+
+      sig { override.params(indent: Integer).returns(String) }
+      def inspect(indent = 0)
+        buff = String.new
+        buff << "#{INDENT_UNIT * indent}(while"
+
+        buff << "\n" << @condition.inspect(indent + 1)
+
+        buff << "#{INDENT_UNIT * (indent + 1)}(then"
+        @then_body.each do |stmt|
+          buff << "\n" << stmt.inspect(indent + 2)
+        end
+        buff << "#{INDENT_UNIT * (indent + 1)})"
+
+        buff << "#{INDENT_UNIT * indent})"
+        buff
+      end
+    end
+
+    # Represents a false literal eg. `false`
+    class FalseLiteralNode < ExpressionNode
+      sig { override.params(indent: Integer).returns(String) }
+      def to_s(indent = 0)
+        "#{INDENT_UNIT * indent}false"
       end
 
       sig { override.params(indent: Integer).returns(String) }
@@ -352,14 +503,9 @@ module MiniRuby
 
     # Represents a true literal eg. `true`
     class TrueLiteralNode < ExpressionNode
-      sig { params(other: Object).returns(T::Boolean) }
-      def ==(other)
-        other.is_a?(TrueLiteralNode)
-      end
-
-      sig { override.returns(String) }
-      def to_s
-        'true'
+      sig { override.params(indent: Integer).returns(String) }
+      def to_s(indent = 0)
+        "#{INDENT_UNIT * indent}true"
       end
 
       sig { override.params(indent: Integer).returns(String) }
@@ -370,14 +516,9 @@ module MiniRuby
 
     # Represents a nil literal eg. `nil`
     class NilLiteralNode < ExpressionNode
-      sig { params(other: Object).returns(T::Boolean) }
-      def ==(other)
-        other.is_a?(NilLiteralNode)
-      end
-
-      sig { override.returns(String) }
-      def to_s
-        'nil'
+      sig { override.params(indent: Integer).returns(String) }
+      def to_s(indent = 0)
+        "#{INDENT_UNIT * indent}nil"
       end
 
       sig { override.params(indent: Integer).returns(String) }
@@ -401,12 +542,12 @@ module MiniRuby
       def ==(other)
         return false unless other.is_a?(FloatLiteralNode)
 
-        value == other.value
+        @span == other.span && @value == other.value
       end
 
-      sig { override.returns(String) }
-      def to_s
-        value
+      sig { override.params(indent: Integer).returns(String) }
+      def to_s(indent = 0)
+        "#{INDENT_UNIT * indent}#{value}"
       end
 
       sig { override.params(indent: Integer).returns(String) }
@@ -430,12 +571,12 @@ module MiniRuby
       def ==(other)
         return false unless other.is_a?(IntegerLiteralNode)
 
-        value == other.value
+        @span == other.span && @value == other.value
       end
 
-      sig { override.returns(String) }
-      def to_s
-        value
+      sig { override.params(indent: Integer).returns(String) }
+      def to_s(indent = 0)
+        "#{INDENT_UNIT * indent}#{value}"
       end
 
       sig { override.params(indent: Integer).returns(String) }
@@ -459,12 +600,12 @@ module MiniRuby
       def ==(other)
         return false unless other.is_a?(StringLiteralNode)
 
-        value == other.value
+        @span == other.span && @value == other.value
       end
 
-      sig { override.returns(String) }
-      def to_s
-        value.inspect
+      sig { override.params(indent: Integer).returns(String) }
+      def to_s(indent = 0)
+        "#{INDENT_UNIT * indent}#{value.inspect}"
       end
 
       sig { override.params(indent: Integer).returns(String) }

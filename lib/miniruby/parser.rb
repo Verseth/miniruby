@@ -232,14 +232,22 @@ module MiniRuby
       when Token::STRING
         tok = advance
         AST::StringLiteralNode.new(tok.span, T.must(tok.value))
+      when Token::IDENTIFIER
+        tok = advance
+        AST::IdentifierNode.new(tok.span, T.must(tok.value))
       when Token::RETURN
         parse_return_expression
+      when Token::IF
+        parse_if_expression
+      when Token::WHILE
+        parse_while_expression
       else
         tok = advance
         add_error("unexpected token `#{tok}`") if tok.type != Token::ERROR
         AST::InvalidNode.new(tok.span, tok)
       end
     end
+
 
     # return_expression = "return" expression
     sig { returns(AST::ExpressionNode) }
@@ -249,6 +257,61 @@ module MiniRuby
       span = return_token.span.join(val.span)
 
       AST::ReturnExpressionNode.new(span, val)
+    end
+
+    # if_expression = "if" expression SEPARATOR statements ["else" (expression | SEPARATOR statements)] "end"
+    sig { returns(AST::ExpressionNode) }
+    def parse_if_expression
+      if_token = advance
+      condition = parse_expression
+
+      separator, ok = consume(Token::SEMICOLON, Token::NEWLINE)
+      return AST::InvalidNode.new(separator.span, separator) unless ok
+
+      then_body = parse_statements
+      else_body = T.let(nil, T.nilable(T::Array[MiniRuby::AST::StatementNode]))
+      span = if_token.span
+
+      if match(Token::ELSE)
+        if match(Token::NEWLINE, Token::SEMICOLON)
+          # else; a + 5; end
+          else_body = parse_statements
+          end_tok, ok = consume(Token::END_K)
+          return AST::InvalidNode.new(end_tok.span, end_tok) unless ok
+
+          span = span.join(end_tok.span)
+        else
+          # else a + 5
+          expr = parse_expression
+          else_body = [AST::ExpressionStatementNode.new(expr.span, expr)]
+          span = span.join(expr.span)
+        end
+      else
+        end_tok, ok = consume(Token::END_K)
+        return AST::InvalidNode.new(end_tok.span, end_tok) unless ok
+
+        span = span.join(end_tok.span)
+      end
+
+      AST::IfExpressionNode.new(span, condition, then_body, else_body)
+    end
+
+    # if_expression = "while" expression SEPARATOR statements "end"
+    sig { returns(AST::ExpressionNode) }
+    def parse_while_expression
+      while_token = advance
+      condition = parse_expression
+
+      separator, ok = consume(Token::SEMICOLON, Token::NEWLINE)
+      return AST::InvalidNode.new(separator.span, separator) unless ok
+
+      then_body = parse_statements
+
+      end_tok, ok = consume(Token::END_K)
+      return AST::InvalidNode.new(end_tok.span, end_tok) unless ok
+
+      span = while_token.span.join(end_tok.span)
+      AST::WhileExpressionNode.new(span, condition, then_body)
     end
 
     # Move over to the next token.
@@ -297,16 +360,17 @@ module MiniRuby
       false
     end
 
-    sig { params(token_type: Symbol).returns([Token, T::Boolean]) }
-    def consume(token_type)
+    sig { params(token_types: Symbol).returns([Token, T::Boolean]) }
+    def consume(*token_types)
       return advance, false if @lookahead.type == Token::ERROR
 
-      if @lookahead.type != token_type
-        error_expected(Token.type_to_string(token_type))
-        return advance, false
+      if token_types.any? { _1 == @lookahead.type }
+        return advance, true
       end
 
-      [advance, true]
+      msg = token_types.map { Token.type_to_string(_1) }.join(' or ')
+      error_expected(msg)
+      return advance, false
     end
 
     # Adds an error which tells the user that another type of token
