@@ -6,8 +6,6 @@ module MiniRuby
   class Span
     extend T::Sig
 
-    ZERO = Span.new(Position::ZERO, Position::ZERO)
-
     sig { returns(Position) }
     attr_reader :start
 
@@ -19,6 +17,8 @@ module MiniRuby
       @start = start
       @end = end_pos
     end
+
+    ZERO = Span.new(Position::ZERO, Position::ZERO)
 
     # Create a new span that includes the area of two spans.
     sig { params(other: Span).returns(Span) }

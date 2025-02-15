@@ -4,7 +4,7 @@
 require 'test_helper'
 
 module MiniRuby
-  class LexerTest < TestCase
+  class TestLexer < TestCase
     def test_lex
       expected = [
         Token.new(Token::GREATER, S(P(2), P(2))),

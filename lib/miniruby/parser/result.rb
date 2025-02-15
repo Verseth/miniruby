@@ -4,7 +4,7 @@
 module MiniRuby
   # The result of parsing a JSON string/file.
   # Combines an AST (Abstract Syntax Tree) and a list of errors.
-  class Result
+  class Parser::Result
     extend T::Sig
 
     sig { returns(AST::Node) }

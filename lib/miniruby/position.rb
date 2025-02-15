@@ -6,8 +6,6 @@ module MiniRuby
   class Position
     extend T::Sig
 
-    ZERO = Position.new(0)
-
     sig { returns(Integer) }
     attr_reader :char_index
 
@@ -15,6 +13,8 @@ module MiniRuby
     def initialize(char_index)
       @char_index = char_index
     end
+
+    ZERO = Position.new(0)
 
     sig { params(other: Object).returns(T::Boolean) }
     def ==(other)

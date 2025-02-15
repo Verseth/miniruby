@@ -8,6 +8,7 @@ require_relative 'miniruby/span'
 require_relative 'miniruby/token'
 require_relative 'miniruby/lexer'
 require_relative 'miniruby/ast'
+require_relative 'miniruby/parser'
 
 module MiniRuby
   class Error < StandardError; end

@@ -1,12 +1,13 @@
 # typed: strict
 # frozen_string_literal: true
 
-require_relative 'parser/result'
 
 module MiniRuby
   # JSON parser
   class Parser
     extend T::Sig
+
+    require_relative 'parser/result'
 
     class << self
       extend T::Sig
@@ -51,13 +52,13 @@ module MiniRuby
     end
 
     # statements = statement*
-    sig { returns(T::Array[AST::StatementNode])}
-    def parse_statements
+    sig { params(stop_tokens: Symbol).returns(T::Array[AST::StatementNode]) }
+    def parse_statements(*stop_tokens)
       statements = T.let([], T::Array[AST::StatementNode])
       swallow_statement_separators
 
       while true
-        return statements if accept(Token::END_OF_FILE)
+        return statements if T.unsafe(self).__send__(:accept, Token::END_OF_FILE, *stop_tokens)
 
         statements << parse_statement
       end
@@ -77,7 +78,7 @@ module MiniRuby
       if (separator = match(Token::NEWLINE, Token::SEMICOLON, Token::END_OF_FILE))
         span = span.join(separator.span)
       else
-        error_expected("a statement separator")
+        error_expected('a statement separator')
       end
 
       AST::ExpressionStatementNode.new(span, expr)
@@ -89,10 +90,10 @@ module MiniRuby
       parse_assignment_expression
     end
 
-    # assignment_expression = IDENTIFIER "=" assignment_expression | equality_expression
+    # assignment_expression = expression "=" assignment_expression | equality_expression
     sig { returns(AST::ExpressionNode) }
     def parse_assignment_expression
-      target = parse_expression
+      target = parse_equality_expression
       return target unless match(Token::EQUAL)
 
       unless target.is_a?(AST::IdentifierNode)
@@ -108,13 +109,13 @@ module MiniRuby
     # equality_expression = equality_expression ("==" | "!=") comparison_expression | comparison_expression
     sig { returns(AST::ExpressionNode) }
     def parse_equality_expression
-      left = parse_comparison_expression()
+      left = parse_comparison_expression
 
       while @lookahead.equality_operator?
-        operator = advance()
-        swallow_newlines()
+        operator = advance
+        swallow_newlines
 
-        right = parse_comparison_expression()
+        right = parse_comparison_expression
         span = left.span.join(right.span)
         left = AST::BinaryExpressionNode.new(
           span,
@@ -124,19 +125,19 @@ module MiniRuby
         )
       end
 
-      return left
+      left
     end
 
     # comparison_expression = comparison_expression (">" | ">=" | "<" | "<=") additive_expression | additive_expression
     sig { returns(AST::ExpressionNode) }
     def parse_comparison_expression
-      left = parse_additive_expression()
+      left = parse_additive_expression
 
       while @lookahead.comparison_operator?
-        operator = advance()
-        swallow_newlines()
+        operator = advance
+        swallow_newlines
 
-        right = parse_additive_expression()
+        right = parse_additive_expression
         span = left.span.join(right.span)
         left = AST::BinaryExpressionNode.new(
           span,
@@ -146,19 +147,19 @@ module MiniRuby
         )
       end
 
-      return left
+      left
     end
 
     # additive_expression = additive_expression ("+" | "-") multiplicative_expression | multiplicative_expression
     sig { returns(AST::ExpressionNode) }
     def parse_additive_expression
-      left = parse_multiplicative_expression()
+      left = parse_multiplicative_expression
 
       while @lookahead.additive_operator?
-        operator = advance()
-        swallow_newlines()
+        operator = advance
+        swallow_newlines
 
-        right = parse_multiplicative_expression()
+        right = parse_multiplicative_expression
         span = left.span.join(right.span)
         left = AST::BinaryExpressionNode.new(
           span,
@@ -168,19 +169,19 @@ module MiniRuby
         )
       end
 
-      return left
+      left
     end
 
     # multiplicative_expression = multiplicative_expression ("*" | "/") unary_expression | unary_expression
     sig { returns(AST::ExpressionNode) }
     def parse_multiplicative_expression
-      left = parse_unary_expression()
+      left = parse_unary_expression
 
       while @lookahead.multiplicative_operator?
-        operator = advance()
-        swallow_newlines()
+        operator = advance
+        swallow_newlines
 
-        right = parse_unary_expression()
+        right = parse_unary_expression
         span = left.span.join(right.span)
         left = AST::BinaryExpressionNode.new(
           span,
@@ -190,7 +191,7 @@ module MiniRuby
         )
       end
 
-      return left
+      left
     end
 
     # unary_expression = primary_expression | ("!" | "-" | "+") unaryExpression
@@ -268,14 +269,14 @@ module MiniRuby
       separator, ok = consume(Token::SEMICOLON, Token::NEWLINE)
       return AST::InvalidNode.new(separator.span, separator) unless ok
 
-      then_body = parse_statements
+      then_body = parse_statements(Token::END_K, Token::ELSE)
       else_body = T.let(nil, T.nilable(T::Array[MiniRuby::AST::StatementNode]))
       span = if_token.span
 
       if match(Token::ELSE)
         if match(Token::NEWLINE, Token::SEMICOLON)
           # else; a + 5; end
-          else_body = parse_statements
+          else_body = parse_statements(Token::END_K)
           end_tok, ok = consume(Token::END_K)
           return AST::InvalidNode.new(end_tok.span, end_tok) unless ok
 
@@ -305,7 +306,7 @@ module MiniRuby
       separator, ok = consume(Token::SEMICOLON, Token::NEWLINE)
       return AST::InvalidNode.new(separator.span, separator) unless ok
 
-      then_body = parse_statements
+      then_body = parse_statements(Token::END_K)
 
       end_tok, ok = consume(Token::END_K)
       return AST::InvalidNode.new(end_tok.span, end_tok) unless ok
@@ -370,7 +371,7 @@ module MiniRuby
 
       msg = token_types.map { Token.type_to_string(_1) }.join(' or ')
       error_expected(msg)
-      return advance, false
+      [advance, false]
     end
 
     # Adds an error which tells the user that another type of token
