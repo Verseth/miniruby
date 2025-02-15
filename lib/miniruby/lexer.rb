@@ -167,6 +167,10 @@ module MiniRuby
           return token(Token::COMMA)
         when ';'
           return token(Token::SEMICOLON)
+        when '('
+          return token(Token::LPAREN)
+        when ')'
+          return token(Token::RPAREN)
         when '!'
           return token(Token::NOT_EQUAL) if match_char('=')
 

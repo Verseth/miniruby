@@ -17,10 +17,10 @@ module MiniRuby
       abstract!
 
       sig { returns(Span) }
-      attr_reader :span
+      attr_accessor :span
 
       sig { params(span: Span).void }
-      def initialize(span)
+      def initialize(span: Span::ZERO)
         @span = span
       end
 
@@ -43,8 +43,8 @@ module MiniRuby
       sig { returns(T::Array[StatementNode]) }
       attr_reader :statements
 
-      sig { params(span: Span, statements: T::Array[StatementNode]).void }
-      def initialize(span, statements)
+      sig { params(statements: T::Array[StatementNode], span: Span).void }
+      def initialize(statements:, span: Span::ZERO)
         @span = span
         @statements = statements
       end
@@ -90,8 +90,8 @@ module MiniRuby
       sig { returns(ExpressionNode) }
       attr_reader :expression
 
-      sig { params(span: Span, expression: ExpressionNode).void }
-      def initialize(span, expression)
+      sig { params(expression: ExpressionNode, span: Span).void }
+      def initialize(expression:, span: Span::ZERO)
         @span = span
         @expression = expression
       end
@@ -129,8 +129,8 @@ module MiniRuby
       sig { returns(Token) }
       attr_reader :token
 
-      sig { params(span: Span, token: Token).void }
-      def initialize(span, token)
+      sig { params(token: Token, span: Span).void }
+      def initialize(token:, span: Span::ZERO)
         @span = span
         @token = token
       end
@@ -164,10 +164,10 @@ module MiniRuby
       sig { returns(ExpressionNode) }
       attr_reader :right
 
-      sig { params(span: Span, op: Token, left: ExpressionNode, right: ExpressionNode).void }
-      def initialize(span, op, left, right)
+      sig { params(operator: Token, left: ExpressionNode, right: ExpressionNode, span: Span).void }
+      def initialize(operator:, left:, right:, span: Span::ZERO)
         @span = span
-        @operator = op
+        @operator = operator
         @left = left
         @right = right
       end
@@ -205,8 +205,8 @@ module MiniRuby
       sig { returns(String) }
       attr_reader :value
 
-      sig { params(span: Span, value: String).void }
-      def initialize(span, value)
+      sig { params(value: String, span: Span).void }
+      def initialize(value:, span: Span::ZERO)
         @span = span
         @value = value
       end
@@ -237,11 +237,11 @@ module MiniRuby
       sig { returns(ExpressionNode) }
       attr_reader :value
 
-      sig { params(span: Span, ident: ExpressionNode, val: ExpressionNode).void }
-      def initialize(span, ident, val)
+      sig { params(target: ExpressionNode, value: ExpressionNode, span: Span).void }
+      def initialize(target:, value:, span: Span::ZERO)
         @span = span
-        @target = ident
-        @value = val
+        @target = target
+        @value = value
       end
 
       sig { params(other: Object).returns(T::Boolean) }
@@ -278,11 +278,11 @@ module MiniRuby
       sig { returns(ExpressionNode) }
       attr_reader :value
 
-      sig { params(span: Span, op: Token, val: ExpressionNode).void }
-      def initialize(span, op, val)
+      sig { params(operator: Token, value: ExpressionNode, span: Span).void }
+      def initialize(operator:, value:, span: Span::ZERO)
         @span = span
-        @operator = op
-        @value = val
+        @operator = operator
+        @value = value
       end
 
       sig { params(other: Object).returns(T::Boolean) }
@@ -313,13 +313,13 @@ module MiniRuby
 
     # Represents a return like `return 3`, `return 1 + 5 * a`
     class ReturnExpressionNode < ExpressionNode
-      sig { returns(ExpressionNode) }
+      sig { returns(T.nilable(ExpressionNode)) }
       attr_reader :value
 
-      sig { params(span: Span, val: ExpressionNode).void }
-      def initialize(span, val)
+      sig { params(value: T.nilable(ExpressionNode), span: Span).void }
+      def initialize(value: nil, span: Span::ZERO)
         @span = span
-        @value = val
+        @value = value
       end
 
       sig { params(other: Object).returns(T::Boolean) }
@@ -331,12 +331,21 @@ module MiniRuby
 
       sig { override.params(indent: Integer).returns(String) }
       def to_s(indent = 0)
-        "#{INDENT_UNIT * indent}return #{@value}"
+        buff = String.new
+        buff << "#{INDENT_UNIT * indent}return"
+        buff << " #{@value}" if @value
+
+        buff
       end
 
       sig { override.params(indent: Integer).returns(String) }
       def inspect(indent = 0)
-        "#{INDENT_UNIT * indent}(return #{@value.inspect})"
+        buff = String.new
+        buff << "#{INDENT_UNIT * indent}(return"
+        buff << " #{@value.inspect}" if @value
+        buff << ')'
+
+        buff
       end
     end
 
@@ -353,15 +362,15 @@ module MiniRuby
 
       sig do
         params(
-          span:      Span,
-          cond:      ExpressionNode,
+          condition: ExpressionNode,
           then_body: T::Array[StatementNode],
           else_body: T.nilable(T::Array[StatementNode]),
+          span:      Span,
         ).void
       end
-      def initialize(span, cond, then_body, else_body = nil)
+      def initialize(condition:, then_body:, else_body: nil, span: Span::ZERO)
         @span = span
-        @condition = cond
+        @condition = condition
         @then_body = then_body
         @else_body = else_body
       end
@@ -434,14 +443,14 @@ module MiniRuby
 
       sig do
         params(
-          span:      Span,
-          cond:      ExpressionNode,
+          condition: ExpressionNode,
           then_body: T::Array[StatementNode],
+          span:      Span,
         ).void
       end
-      def initialize(span, cond, then_body)
+      def initialize(condition:, then_body:, span: Span::ZERO)
         @span = span
-        @condition = cond
+        @condition = condition
         @then_body = then_body
       end
 
@@ -530,8 +539,8 @@ module MiniRuby
       sig { returns(String) }
       attr_reader :value
 
-      sig { params(span: Span, value: String).void }
-      def initialize(span, value)
+      sig { params(value: String, span: Span).void }
+      def initialize(value:, span: Span::ZERO)
         @span = span
         @value = value
       end
@@ -559,8 +568,8 @@ module MiniRuby
       sig { returns(String) }
       attr_reader :value
 
-      sig { params(span: Span, value: String).void }
-      def initialize(span, value)
+      sig { params(value: String, span: Span).void }
+      def initialize(value:, span: Span::ZERO)
         @span = span
         @value = value
       end
@@ -588,8 +597,8 @@ module MiniRuby
       sig { returns(String) }
       attr_reader :value
 
-      sig { params(span: Span, value: String).void }
-      def initialize(span, value)
+      sig { params(value: String, span: Span).void }
+      def initialize(value:, span: Span::ZERO)
         @span = span
         @value = value
       end

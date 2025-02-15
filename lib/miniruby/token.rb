@@ -21,6 +21,10 @@ module MiniRuby
           'END_OF_FILE'
         when ERROR
           'ERROR'
+        when LPAREN
+          '('
+        when RPAREN
+          ')'
         when COMMA
           ','
         when SEMICOLON
@@ -99,7 +103,7 @@ module MiniRuby
     def ==(other)
       return false unless other.is_a?(Token)
 
-      type == other.type && value == other.value && span == other.span
+      type == other.type && value == other.value
     end
 
     sig { returns(String) }
@@ -149,6 +153,11 @@ module MiniRuby
       end
     end
 
+    sig { returns(String) }
+    def type_name
+      self.class.type_to_string(@type)
+    end
+
     # Converts a token into a human-readable string.
     sig { returns(String) }
     def to_s
@@ -159,6 +168,10 @@ module MiniRuby
         'END_OF_FILE'
       when ERROR
         "<error: #{value}>"
+      when LPAREN
+        '('
+      when RPAREN
+        ')'
       when COMMA
         ','
       when SEMICOLON
@@ -245,6 +258,10 @@ module MiniRuby
     # Holds an error message, means that the string/file could not be
     # successfully processed
     ERROR = :error
+    # Left parentheses `(`
+    LPAREN = :lparen
+    # Right parentheses `)`
+    RPAREN = :rparen
     # Comma `,`
     COMMA = :comma
     # Semicolon `;`
