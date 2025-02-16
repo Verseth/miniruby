@@ -1,11 +1,32 @@
 # typed: strict
 # frozen_string_literal: true
 
+require_relative 'io'
+
 module MiniRuby
   # A chunk of bytecode produced by the compiler.
   # Can be executed by the Virtual Machine.
   class BytecodeFunction
     extend T::Sig
+
+    class << self
+      extend T::Sig
+
+      sig { params(bytes: T::Array[Integer]).returns(String) }
+      def pack_instructions!(bytes)
+        bytes.pack('c*')
+      end
+
+      sig { params(bytes: Integer).returns(String) }
+      def pack_instructions(*bytes)
+        pack_instructions!(bytes)
+      end
+
+      sig { params(instructions: String).returns(T::Array[Integer]) }
+      def unpack_instructions(instructions)
+        T.unsafe(instructions.unpack('c*'))
+      end
+    end
 
     sig { returns(String) }
     attr_reader :name
@@ -25,20 +46,22 @@ module MiniRuby
 
     sig do
       params(
-        name: String,
-        filename: String,
+        name:         String,
+        filename:     String,
         instructions: String,
-        value_pool: T::Array[Object],
-        span: Span,
+        value_pool:   T::Array[Object],
+        span:         Span,
       ).void
     end
-    def initialize(name:, filename: '<main>', instructions: String.new.b, value_pool: [], span: Span::ZERO)
+    def initialize(name: '<main>', filename: '<main>', instructions: String.new.b, value_pool: [], span: Span::ZERO)
       @name = name
       @filename = filename
       @instructions = instructions
       @value_pool = value_pool
       @span = span
     end
+
+    ZERO = T.let(new(name: 'zero'), BytecodeFunction)
 
     sig { params(bytes: T::Array[Integer]).void }
     def add_bytes!(bytes)
@@ -56,9 +79,12 @@ module MiniRuby
     # Throws when the index is larger than 255.
     sig { params(value: Object).returns(Integer) }
     def add_value(value)
+      id = @value_pool.find_index { _1 == value }
+      return id if id
+
       id = @value_pool.length
       if id > 255
-        throw ArgumentError, "could not add value to the pool, exceeded 256 elements"
+        throw ArgumentError, 'could not add value to the pool, exceeded 256 elements'
       end
 
       @value_pool << value
@@ -73,14 +99,14 @@ module MiniRuby
     sig { returns(String) }
     def disassemble_string
       buff = StringIO.new
-      disassemble(T.unsafe(buff))
+      disassemble(buff)
 
       buff.string
     end
 
     sig { params(out: IO).void }
     def disassemble(out)
-      out.puts "== Disassembly of #{@name} at: #{@filename} =="
+      out.puts "== BytecodeFunction #{@name} at: #{@filename} =="
       return if @instructions.length == 0
 
       offset = 0
@@ -97,11 +123,26 @@ module MiniRuby
       end
     end
 
+    sig { params(other: Object).returns(T::Boolean) }
+    def ==(other)
+      return false unless other.is_a?(BytecodeFunction)
+
+      @name == other.name &&
+        @filename == other.filename &&
+        @instructions == other.instructions &&
+        @value_pool == other.value_pool
+    end
+
+    sig { returns(String) }
+    def inspect
+      disassemble_string
+    end
+
     private
 
     sig { params(out: IO, offset: Integer).returns(Integer) }
     def disassemble_instruction(out, offset)
-      out.printf("%04d  ", offset)
+      out.printf('%04d  ', offset)
       opcode = T.must @instructions.getbyte(offset)
 
       case opcode
@@ -110,8 +151,11 @@ module MiniRuby
         Opcode::DIVIDE, Opcode::NEGATE, Opcode::EQUAL,
         Opcode::GREATER, Opcode::GREATER_EQUAL, Opcode::LESS, Opcode::LESS_EQUAL,
         Opcode::NOT, Opcode::TRUE, Opcode::FALSE, Opcode::NIL, Opcode::RETURN
+
         disassemble_one_byte_instruction(out, Opcode.name(opcode), offset)
-      when Opcode::GET_LOCAL, Opcode::SET_LOCAL, Opcode::PREP_LOCALS
+      when Opcode::GET_LOCAL, Opcode::SET_LOCAL, Opcode::PREP_LOCALS,
+        Opcode::JUMP, Opcode::JUMP_UNLESS, Opcode::LOOP
+
         disassemble_numeric_operand(out, offset)
       when Opcode::LOAD_VALUE, Opcode::CALL
         disassemble_value(out, offset)
@@ -124,15 +168,15 @@ module MiniRuby
 
     sig do
       params(
-        out: IO,
-        name: String,
+        out:    IO,
+        name:   String,
         offset: Integer,
       ).returns(Integer)
     end
     def disassemble_one_byte_instruction(out, name, offset)
       dump_bytes(out, offset, 1)
       out.puts(name)
-      return offset + 1
+      offset + 1
     end
 
     # The maximum number of bytes a single
@@ -142,14 +186,14 @@ module MiniRuby
     sig { params(out: IO, offset: Integer, count: Integer).void }
     def dump_bytes(out, offset, count)
       i = offset
-      while i < offset+count
-        out.printf("%02X ", @instructions.getbyte(i))
+      while i < offset + count
+        out.printf('%02X ', @instructions.getbyte(i))
         i += 1
       end
 
       i = count
       while i < MAX_INSTRUCTION_BYTE_COUNT
-        out.print("   ")
+        out.print('   ')
         i += 1
       end
     end
@@ -177,21 +221,21 @@ module MiniRuby
       dump_bytes(out, offset, bytes)
       print_opcode(out, opcode)
 
-      a = T.must @instructions.getbyte(offset+1)
+      a = T.must @instructions.getbyte(offset + 1)
       print_num_field(out, a)
       out.puts
 
-      return offset + bytes
+      offset + bytes
     end
 
     sig { params(out: IO, opcode: Integer).void }
     def print_opcode(out, opcode)
-	    out.printf("%-18s", Opcode.name(opcode))
+      out.printf('%-18s', Opcode.name(opcode))
     end
 
     sig { params(out: IO, n: Integer).void }
     def print_num_field(out, n)
-      out.printf("%-16d", n)
+      out.printf('%-16d', n)
     end
 
 
@@ -200,7 +244,7 @@ module MiniRuby
       opcode = T.must @instructions.getbyte(offset)
       return offset + 1 unless check_bytes(out, offset, 2)
 
-      value_index = T.must @instructions.getbyte(offset+1)
+      value_index = T.must @instructions.getbyte(offset + 1)
 
       dump_bytes(out, offset, 2)
       print_opcode(out, opcode)
@@ -213,7 +257,7 @@ module MiniRuby
       value = @value_pool[value_index]
       out.printf("%d (%s)\n", value_index, value.inspect)
 
-      return offset + 2
+      offset + 2
     end
 
   end

@@ -14,7 +14,7 @@ module MiniRuby
     class << self
       extend T::Sig
 
-      sig { returns(Integer)}
+      sig { returns(Integer) }
       def iota
         i = @iota
         @iota += 1
@@ -45,11 +45,11 @@ module MiniRuby
 
     define(
       # No operation, placeholder
-      NOOP: NOOP = T.let(iota, Integer),
+      NOOP:          NOOP = T.let(iota, Integer),
       # Pops a value off the stack
-      POP: POP = T.let(iota, Integer),
+      POP:           POP = T.let(iota, Integer),
       # Pushes the value on top of the stack (duplicates it).
-      DUP: DUP = T.let(iota, Integer),
+      DUP:           DUP = T.let(iota, Integer),
       # Prints the stack, for debugging
       INSPECT_STACK: INSPECT_STACK = T.let(iota, Integer),
 
@@ -57,79 +57,78 @@ module MiniRuby
       # ==========
 
       # Pops two values off the stack, adds them together and pushes the result
-      ADD: ADD = T.let(iota, Integer),
+      ADD:           ADD = T.let(iota, Integer),
       # Pops two values off the stack, subtracts them and pushes the result
-      SUBTRACT: SUBTRACT = T.let(iota, Integer),
+      SUBTRACT:      SUBTRACT = T.let(iota, Integer),
       # Pops two values off the stack, multiplies them and pushes the result
-      MULTIPLY: MULTIPLY = T.let(iota, Integer),
+      MULTIPLY:      MULTIPLY = T.let(iota, Integer),
       # Pops two values off the stack, divides them and pushes the result
-      DIVIDE: DIVIDE = T.let(iota, Integer),
+      DIVIDE:        DIVIDE = T.let(iota, Integer),
       # Pops on value off the stack, negates it numerically and pushes the result (1 => -1)
-      NEGATE: NEGATE = T.let(iota, Integer),
+      NEGATE:        NEGATE = T.let(iota, Integer),
 
       # Comparison
       # ==========
 
       # Pops two values off the stack, checks if they're equal, pushes a boolean value
-      EQUAL: EQUAL = T.let(iota, Integer),
+      EQUAL:         EQUAL = T.let(iota, Integer),
       # Pops two values off the stack, checks if the first is greater, pushes a boolean value
-      GREATER: GREATER = T.let(iota, Integer),
+      GREATER:       GREATER = T.let(iota, Integer),
       # Pops two values off the stack, checks if the first is greater or equal, pushes a boolean value
       GREATER_EQUAL: GREATER_EQUAL = T.let(iota, Integer),
       # Pops two values off the stack, checks if the first is less, pushes a boolean value
-      LESS: LESS = T.let(iota, Integer),
+      LESS:          LESS = T.let(iota, Integer),
       # Pops two values off the stack, checks if the first is less or equal, pushes a boolean value
-      LESS_EQUAL: LESS_EQUAL = T.let(iota, Integer),
+      LESS_EQUAL:    LESS_EQUAL = T.let(iota, Integer),
 
       # Logic
       # ==========
 
       # Pops one value off the stack, negates it logically and pushes the result (true => false)
-      NOT: NOT = T.let(iota, Integer),
+      NOT:           NOT = T.let(iota, Integer),
 
       # Values
       # ==========
 
       # Expects a single byte operand, pushes a value the with the given index to the stack
-      LOAD_VALUE: LOAD_VALUE = T.let(iota, Integer),
+      LOAD_VALUE:    LOAD_VALUE = T.let(iota, Integer),
       # Pushes `true` to the stack
-      TRUE: TRUE = T.let(iota, Integer),
+      TRUE:          TRUE = T.let(iota, Integer),
       # Pushes `false` to the stack
-      FALSE: FALSE = T.let(iota, Integer),
+      FALSE:         FALSE = T.let(iota, Integer),
       # Pushes `nil` to the stack
-      NIL: NIL = T.let(iota, Integer),
+      NIL:           NIL = T.let(iota, Integer),
 
       # Control flow
       # ==========
 
       # Returns form the current function
-      RETURN: RETURN = T.let(iota, Integer),
+      RETURN:        RETURN = T.let(iota, Integer),
       # Expects a single byte operand.
       # Jumps `n` bytes forward.
-      JUMP: JUMP = T.let(iota, Integer),
+      JUMP:          JUMP = T.let(iota, Integer),
       # Expects a single byte operand.
       # Jumps `n` bytes backward.
-      LOOP: LOOP = T.let(iota, Integer),
+      LOOP:          LOOP = T.let(iota, Integer),
       # Expects a single byte operand, pops one value off the stack.
       # Jumps `n` bytes forward if the value is falsy.
-      JUMP_UNLESS: JUMP_UNLESS = T.let(iota, Integer),
+      JUMP_UNLESS:   JUMP_UNLESS = T.let(iota, Integer),
       # Expects a single byte operand.
       # Calls the function with the given name.
-      CALL: CALL = T.let(iota, Integer),
+      CALL:          CALL = T.let(iota, Integer),
 
       # Variables
       # ==========
 
       # Expects a single byte operand.
       # Prepares slots for local variables.
-      PREP_LOCALS: PREP_LOCALS = T.let(iota, Integer),
+      PREP_LOCALS:   PREP_LOCALS = T.let(iota, Integer),
       # Expects a single byte operand.
       # Pushes the value of the local variable with the given index.
-      GET_LOCAL: GET_LOCAL = T.let(iota, Integer),
+      GET_LOCAL:     GET_LOCAL = T.let(iota, Integer),
       # Expects a single byte operand.
       # Assigns the value on top of the stack to the local variable with the given index.
-      SET_LOCAL: SET_LOCAL = T.let(iota, Integer),
+      SET_LOCAL:     SET_LOCAL = T.let(iota, Integer),
     )
   end
 end
-

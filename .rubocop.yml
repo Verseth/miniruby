@@ -48,3 +48,9 @@ Style/InfiniteLoop:
 
 Style/WhileUntilModifier:
   Enabled: false
+
+Style/FormatStringToken:
+  Enabled: false
+
+Layout/EmptyLinesAroundArguments:
+  Enabled: false

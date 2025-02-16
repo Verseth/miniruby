@@ -8,6 +8,81 @@ module MiniRuby
   class Compiler
     extend T::Sig
 
+    # Wraps a list of compiler errors.
+    class Error < MiniRuby::Error
+      extend T::Sig
+
+      class << self
+        extend T::Sig
+
+        sig { params(errors: String).returns(T.attached_class) }
+        def [](*errors)
+          new(errors)
+        end
+      end
+
+      sig { returns(T::Array[String]) }
+      attr_reader :errors
+
+      sig { params(errors: T::Array[String]).void }
+      def initialize(errors)
+        @errors = errors
+      end
+
+      sig { params(other: Object).returns(T::Boolean) }
+      def ==(other)
+        return false unless other.is_a?(Error)
+
+        @errors == other.errors
+      end
+
+      sig { returns(String) }
+      def inspect
+        "#{self.class}#{@errors.inspect}"
+      end
+    end
+
+    class << self
+      extend T::Sig
+
+      # Compile an AST node.
+      sig do
+        params(
+          node:     AST::ProgramNode,
+          name:     String,
+          filename: String,
+          span:     Span,
+        ).returns(BytecodeFunction)
+      end
+      def compile_node(node:, name: '<main>', filename: '<main>', span: Span::ZERO)
+        compiler = new(name:, filename:, span:)
+        compiler.compile_program(node)
+        raise Error.new(compiler.errors) if compiler.err?
+
+        compiler.bytecode
+      end
+
+      # Compile source code.
+      sig do
+        params(
+          source:   String,
+          name:     String,
+          filename: String,
+        ).returns(BytecodeFunction)
+      end
+      def compile_source(source:, name: '<main>', filename: '<main>')
+        result = Parser.parse(source)
+        raise Error.new(result.errors) if result.err?
+
+        node = result.ast
+        compiler = new(name:, filename:, span: node.span)
+        compiler.compile_program(node)
+        raise Error.new(compiler.errors) if compiler.err?
+
+        compiler.bytecode
+      end
+    end
+
     sig { returns(String) }
     attr_reader :name
 
@@ -40,14 +115,19 @@ module MiniRuby
       define_local('#self')
     end
 
-    private
-
     sig { params(node: AST::ProgramNode).void }
     def compile_program(node)
       compile_statements(node.statements)
       emit(Opcode::RETURN)
-      prepare_locals()
+      prepare_locals
     end
+
+    sig { returns T::Boolean }
+    def err?
+      @errors.length > 0
+    end
+
+    private
 
     sig { void }
     def prepare_locals
@@ -73,7 +153,7 @@ module MiniRuby
       when AST::ExpressionStatementNode
         compile_expression(node.expression)
       else
-        raise "invalid statement node: #{node.inspect}"
+        raise ArgumentError, "invalid statement node: #{node.inspect}"
       end
     end
 
@@ -90,6 +170,8 @@ module MiniRuby
         emit_value(Integer(node.value))
       when AST::FloatLiteralNode
         emit_value(Float(node.value))
+      when AST::StringLiteralNode
+        emit_value(node.value)
       when AST::UnaryExpressionNode
         compile_unary_expression(node)
       when AST::BinaryExpressionNode
@@ -117,23 +199,17 @@ module MiniRuby
       compile_expression(node.condition)
       loop_body_offset = emit_jump(Opcode::JUMP_UNLESS)
 
-      emit(Opcode::POP, )
+      # pop the return value of the last iteration
+      emit(Opcode::POP)
 
       # then branch
       compile_statements(node.then_body)
-      loop_body_offset = emit_jump(Opcode::JUMP)
 
-      # else brach
-      patch_jump(then_jump_offset)
-      else_body = node.else_body
-      if else_body
-        compile_statements(else_body)
-      else
-        emit(Opcode::NIL)
-      end
+      # jump to loop condition
+      emit_loop(start)
 
-      # jump over else
-      patch_jump(else_jump_offset)
+      # after loop
+      patch_jump(loop_body_offset)
     end
 
     sig { params(node: AST::IfExpressionNode).void }
@@ -185,7 +261,7 @@ module MiniRuby
       compile_expression(node.value)
 
       target = node.target
-      raise "invalid assignment target: #{target.inspect}" unless target.is_a?(AST::IdentifierNode)
+      raise ArgumentError, "invalid assignment target: #{target.inspect}" unless target.is_a?(AST::IdentifierNode)
 
       local_name = target.value
       index = define_or_get_local(local_name)
@@ -222,7 +298,7 @@ module MiniRuby
       when Token::LESS_EQUAL
         emit(Opcode::LESS_EQUAL)
       else
-        raise "invalid binary operator: #{node.operator.type_name}"
+        raise ArgumentError, "invalid binary operator: #{node.operator.type_name}"
       end
     end
 
@@ -237,7 +313,7 @@ module MiniRuby
         emit(Opcode::NOT)
       when Token::PLUS
       else
-        raise "invalid unary operator: #{node.operator.type_name}"
+        raise ArgumentError, "invalid unary operator: #{node.operator.type_name}"
       end
     end
 
@@ -265,7 +341,7 @@ module MiniRuby
 
     sig { params(name: String).returns(Integer) }
     def define_local(name)
-      if @last_local_index == MAX_LOCALS-1
+      if @last_local_index == MAX_LOCALS - 1
         @errors << "exceeded the maximum number of local variables (#{MAX_LOCALS}): #{name}"
         return -1
       end
@@ -300,10 +376,13 @@ module MiniRuby
     sig { params(value: Object).returns(Integer) }
     def emit_load_value(value)
       index = @bytecode.add_value(value)
-      return index if index < MAX_VALUES
+      if index >= MAX_VALUES
+        @errors << "value pool limit reached: #{MAX_VALUES}"
+        return -1
+      end
 
-      @errors << "value pool limit reached: #{MAX_VALUES}"
-      return -1
+      emit(Opcode::LOAD_VALUE, index)
+      index
     end
 
     # Emit an instruction that jumps forward with a placeholder offset.
@@ -311,8 +390,21 @@ module MiniRuby
     sig { params(opcode: Integer).returns(Integer) }
     def emit_jump(opcode)
       emit(opcode, 0xff)
-      return next_instruction_offset - 1
+      next_instruction_offset - 1
     end
+
+    # Emit an instruction that jumps back to the given Bytecode offset.
+    sig { params(start_offset: Integer).void }
+    def emit_loop(start_offset)
+      emit(Opcode::LOOP)
+      offset = next_instruction_offset - start_offset + 2
+      if offset > MAX_JUMP
+        @errors << "too many bytes to jump backward: #{offset}"
+      end
+
+      emit(offset)
+    end
+
 
     # Return the offset of the next instruction.
     sig { returns(Integer) }
@@ -325,7 +417,7 @@ module MiniRuby
 
     # Overwrite the placeholder operand of a jump instruction
     sig { params(offset: Integer, target: Integer).void }
-    def patch_jump(offset, target = next_instruction_offset-offset-1)
+    def patch_jump(offset, target = next_instruction_offset - offset - 1)
       if target > MAX_JUMP
         @errors << "too many bytes to jump over: #{target}"
         return

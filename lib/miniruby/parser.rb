@@ -38,7 +38,7 @@ module MiniRuby
     private
 
     # program = statements
-    sig { returns(AST::Node) }
+    sig { returns(AST::ProgramNode) }
     def parse_program
       statements = parse_statements
 

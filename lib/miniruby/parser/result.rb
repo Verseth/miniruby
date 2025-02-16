@@ -7,13 +7,13 @@ module MiniRuby
   class Parser::Result
     extend T::Sig
 
-    sig { returns(AST::Node) }
+    sig { returns(AST::ProgramNode) }
     attr_reader :ast
 
     sig { returns(T::Array[String]) }
     attr_reader :errors
 
-    sig { params(ast: AST::Node, errors: T::Array[String]).void }
+    sig { params(ast: AST::ProgramNode, errors: T::Array[String]).void }
     def initialize(ast, errors)
       @ast = ast
       @errors = errors
