@@ -4,7 +4,7 @@
 require_relative 'token'
 
 module MiniRuby
-  # A lexical analyzer (tokenizer) for JSON
+  # A lexical analyzer (tokenizer) for MiniRuby
   class Lexer
     extend T::Sig
     extend T::Generic

@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 module MiniRuby
-  # The result of parsing a JSON string/file.
+  # The result of parsing a MiniRuby string/file.
   # Combines an AST (Abstract Syntax Tree) and a list of errors.
   class Parser::Result
     extend T::Sig

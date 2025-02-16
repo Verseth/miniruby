@@ -1,9 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
-
 module MiniRuby
-  # JSON parser
+  # MiniRuby parser
   class Parser
     extend T::Sig
 
@@ -58,7 +57,7 @@ module MiniRuby
       swallow_statement_separators
 
       while true
-        return statements if T.unsafe(self).__send__(:accept, Token::END_OF_FILE, *stop_tokens)
+        return statements if accept!([Token::END_OF_FILE, *stop_tokens])
 
         statements << parse_statement
       end
@@ -370,6 +369,12 @@ module MiniRuby
     # Checks whether the next token matches any the specified types.
     sig { params(token_types: Symbol).returns(T::Boolean) }
     def accept(*token_types)
+      accept!(token_types)
+    end
+
+    # Checks whether the next token matches any the specified types.
+    sig { params(token_types: T::Array[Symbol]).returns(T::Boolean) }
+    def accept!(token_types)
       token_types.each do |type|
         return true if @lookahead.type == type
       end

@@ -12,5 +12,4 @@ require_relative 'miniruby/parser'
 
 module MiniRuby
   class Error < StandardError; end
-  # Your code goes here...
 end
