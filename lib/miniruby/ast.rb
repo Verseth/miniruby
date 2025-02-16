@@ -488,9 +488,68 @@ module MiniRuby
         @then_body.each do |stmt|
           buff << "\n" << stmt.inspect(indent + 2)
         end
-        buff << "#{INDENT_UNIT * (indent + 1)})"
+        buff << ')'
 
         buff << ')'
+        buff
+      end
+    end
+
+    # Represents a call like `foo(1, bar)`
+    class CallNode < ExpressionNode
+      sig { returns(String) }
+      attr_reader :name
+
+      sig { returns(T::Array[ExpressionNode]) }
+      attr_reader :arguments
+
+      sig do
+        params(
+          name:      String,
+          arguments: T::Array[ExpressionNode],
+          span:      Span,
+        ).void
+      end
+      def initialize(name:, arguments: [], span: Span::ZERO)
+        @span = span
+        @name = name
+        @arguments = arguments
+      end
+
+      sig { params(other: Object).returns(T::Boolean) }
+      def ==(other)
+        return false unless other.is_a?(CallNode)
+
+        @name == other.name &&
+          @arguments == other.arguments
+      end
+
+      sig { override.params(indent: Integer).returns(String) }
+      def to_s(indent = 0)
+        buff = String.new
+        indent_str = INDENT_UNIT * indent
+
+        buff << "#{indent_str}#{@name}("
+        @arguments.each.with_index do |arg, i|
+          buff << ', ' if i > 0
+          buff << arg.to_s
+        end
+        buff << ')'
+
+        buff
+      end
+
+      sig { override.params(indent: Integer).returns(String) }
+      def inspect(indent = 0)
+        buff = String.new
+        buff << "#{INDENT_UNIT * indent}(call\n"
+
+        buff << "#{INDENT_UNIT * (indent + 1)}#{@name}"
+        @arguments.each do |arg|
+          buff << "\n" << arg.inspect(indent + 1)
+        end
+        buff << ')'
+
         buff
       end
     end

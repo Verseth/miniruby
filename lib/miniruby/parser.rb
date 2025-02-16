@@ -193,7 +193,7 @@ module MiniRuby
       left
     end
 
-    # unary_expression = primary_expression | ("!" | "-" | "+") unaryExpression
+    # unary_expression = call | ("!" | "-" | "+") unaryExpression
     sig { returns(AST::ExpressionNode) }
     def parse_unary_expression
       if (operator = match(Token::BANG, Token::MINUS, Token::PLUS))
@@ -208,7 +208,46 @@ module MiniRuby
         )
       end
 
-      parse_primary_expression
+      parse_call
+    end
+
+    # call = IDENTIFIER "(" argument_list ")" | primary_expression
+    sig { returns(AST::ExpressionNode) }
+    def parse_call
+      ident = parse_primary_expression
+      return ident unless ident.is_a?(AST::IdentifierNode) && match(Token::LPAREN)
+
+      swallow_newlines
+      arg_list = parse_argument_list
+      swallow_newlines
+
+      rparen, ok = consume(Token::RPAREN)
+      return AST::InvalidNode.new(span: rparen.span, token: rparen) unless ok
+
+      span = ident.span.join(rparen.span)
+      AST::CallNode.new(
+        span:,
+        name:      ident.value,
+        arguments: arg_list,
+      )
+    end
+
+    sig { returns(T::Array[AST::ExpressionNode]) }
+    def parse_argument_list
+      return [] if accept(Token::RPAREN)
+
+      args = [parse_expression]
+      while true
+        break if accept(Token::END_OF_FILE, Token::RPAREN)
+        break unless match(Token::COMMA)
+
+        swallow_newlines
+        break if accept(Token::END_OF_FILE, Token::RPAREN)
+
+        args << parse_expression
+      end
+
+      args
     end
 
     sig { returns(AST::ExpressionNode) }

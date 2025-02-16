@@ -32,6 +32,58 @@ module MiniRuby
       assert_equal expected, result.ast
     end
 
+    def test_string
+      result = parse('"foo"')
+      expected = AST::ProgramNode.new(
+        statements: [
+          AST::ExpressionStatementNode.new(
+            expression: AST::StringLiteralNode.new(value: 'foo'),
+          ),
+        ],
+      )
+      assert_equal false, result.err?
+      assert_equal expected, result.ast
+
+      result = parse('"bar\n\t"')
+      expected = AST::ProgramNode.new(
+        statements: [
+          AST::ExpressionStatementNode.new(
+            expression: AST::StringLiteralNode.new(value: "bar\n\t"),
+          ),
+        ],
+      )
+      assert_equal false, result.err?
+      assert_equal expected, result.ast
+
+      result = parse('"foo')
+      expected = AST::ProgramNode.new(
+        statements: [
+          AST::ExpressionStatementNode.new(
+            expression: AST::InvalidNode.new(
+              token: Token.new(Token::ERROR, S(P(0), P(3)), 'unterminated string literal'),
+            ),
+          ),
+        ],
+      )
+      assert_equal true, result.err?
+      assert_equal ['unterminated string literal'], result.errors
+      assert_equal expected, result.ast
+
+      result = parse('"f\oo"')
+      expected = AST::ProgramNode.new(
+        statements: [
+          AST::ExpressionStatementNode.new(
+            expression: AST::InvalidNode.new(
+              token: Token.new(Token::ERROR, S(P(0), P(3)), 'invalid escape `\\o`'),
+            ),
+          ),
+        ],
+      )
+      assert_equal true, result.err?
+      assert_equal ['invalid escape `\\o`'], result.errors
+      assert_equal expected, result.ast
+    end
+
     def test_float
       result = parse('12.4')
       expected = AST::ProgramNode.new(
@@ -824,6 +876,116 @@ module MiniRuby
         ],
       )
       assert_equal false, result.err?
+      assert_equal expected, result.ast
+    end
+
+    def test_call
+      result = parse('foo()')
+      expected = AST::ProgramNode.new(
+        statements: [
+          AST::ExpressionStatementNode.new(
+            expression: AST::CallNode.new(
+              name: 'foo',
+            ),
+          ),
+        ],
+      )
+      assert_equal false, result.err?, result.errors
+      assert_equal expected, result.ast
+
+      result = parse('foo(1)')
+      expected = AST::ProgramNode.new(
+        statements: [
+          AST::ExpressionStatementNode.new(
+            expression: AST::CallNode.new(
+              name:      'foo',
+              arguments: [
+                AST::IntegerLiteralNode.new(value: '1'),
+              ],
+            ),
+          ),
+        ],
+      )
+      assert_equal false, result.err?, result.errors
+      assert_equal expected, result.ast
+
+      result = parse('foo(1,)')
+      expected = AST::ProgramNode.new(
+        statements: [
+          AST::ExpressionStatementNode.new(
+            expression: AST::CallNode.new(
+              name:      'foo',
+              arguments: [
+                AST::IntegerLiteralNode.new(value: '1'),
+              ],
+            ),
+          ),
+        ],
+      )
+      assert_equal false, result.err?, result.errors
+      assert_equal expected, result.ast
+
+      result = parse('foo(1, 2 + 5)')
+      expected = AST::ProgramNode.new(
+        statements: [
+          AST::ExpressionStatementNode.new(
+            expression: AST::CallNode.new(
+              name:      'foo',
+              arguments: [
+                AST::IntegerLiteralNode.new(value: '1'),
+                AST::BinaryExpressionNode.new(
+                  operator: Token.new(Token::PLUS, Span::ZERO),
+                  left:     AST::IntegerLiteralNode.new(value: '2'),
+                  right:    AST::IntegerLiteralNode.new(value: '5'),
+                ),
+              ],
+            ),
+          ),
+        ],
+      )
+      assert_equal false, result.err?, result.errors
+      assert_equal expected, result.ast
+      result = parse("foo(\n1,\n2 + 5,\n)")
+      expected = AST::ProgramNode.new(
+        statements: [
+          AST::ExpressionStatementNode.new(
+            expression: AST::CallNode.new(
+              name:      'foo',
+              arguments: [
+                AST::IntegerLiteralNode.new(value: '1'),
+                AST::BinaryExpressionNode.new(
+                  operator: Token.new(Token::PLUS, Span::ZERO),
+                  left:     AST::IntegerLiteralNode.new(value: '2'),
+                  right:    AST::IntegerLiteralNode.new(value: '5'),
+                ),
+              ],
+            ),
+          ),
+        ],
+      )
+      assert_equal false, result.err?, result.errors
+      assert_equal expected, result.ast
+
+      result = parse('foo(1, bar("baz"))')
+      expected = AST::ProgramNode.new(
+        statements: [
+          AST::ExpressionStatementNode.new(
+            expression: AST::CallNode.new(
+              name:      'foo',
+              arguments: [
+                AST::IntegerLiteralNode.new(value: '1'),
+                AST::CallNode.new(
+                  name:      'bar',
+                  arguments: [
+                    AST::StringLiteralNode.new(value: 'baz'),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      )
+      assert_equal false, result.err?, result.errors
       assert_equal expected, result.ast
     end
 
