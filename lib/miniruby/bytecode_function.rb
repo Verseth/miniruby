@@ -75,6 +75,8 @@ module MiniRuby
       add_bytes!(bytes)
     end
 
+    MAX_VALUE_ID = 255
+
     # Adds a value to the value pool and returns its index.
     # Throws when the index is larger than 255.
     sig { params(value: Object).returns(Integer) }
@@ -83,8 +85,8 @@ module MiniRuby
       return id if id
 
       id = @value_pool.length
-      if id > 255
-        throw ArgumentError, 'could not add value to the pool, exceeded 256 elements'
+      if id > MAX_VALUE_ID
+        throw ArgumentError, "could not add value to the pool, exceeded #{MAX_VALUE_ID + 1} elements"
       end
 
       @value_pool << value
