@@ -159,6 +159,17 @@ module MiniRuby
       )
       assert_equal false, result.err?
       assert_equal expected, result.ast
+
+      result = parse('self')
+      expected = AST::ProgramNode.new(
+        statements: [
+          AST::ExpressionStatementNode.new(
+            expression: AST::SelfLiteralNode.new,
+          ),
+        ],
+      )
+      assert_equal false, result.err?
+      assert_equal expected, result.ast
     end
 
     def test_identifier
@@ -884,7 +895,7 @@ module MiniRuby
       expected = AST::ProgramNode.new(
         statements: [
           AST::ExpressionStatementNode.new(
-            expression: AST::CallNode.new(
+            expression: AST::FunctionCallNode.new(
               name: 'foo',
             ),
           ),
@@ -897,7 +908,7 @@ module MiniRuby
       expected = AST::ProgramNode.new(
         statements: [
           AST::ExpressionStatementNode.new(
-            expression: AST::CallNode.new(
+            expression: AST::FunctionCallNode.new(
               name:      'foo',
               arguments: [
                 AST::IntegerLiteralNode.new(value: '1'),
@@ -913,7 +924,7 @@ module MiniRuby
       expected = AST::ProgramNode.new(
         statements: [
           AST::ExpressionStatementNode.new(
-            expression: AST::CallNode.new(
+            expression: AST::FunctionCallNode.new(
               name:      'foo',
               arguments: [
                 AST::IntegerLiteralNode.new(value: '1'),
@@ -929,7 +940,7 @@ module MiniRuby
       expected = AST::ProgramNode.new(
         statements: [
           AST::ExpressionStatementNode.new(
-            expression: AST::CallNode.new(
+            expression: AST::FunctionCallNode.new(
               name:      'foo',
               arguments: [
                 AST::IntegerLiteralNode.new(value: '1'),
@@ -949,7 +960,7 @@ module MiniRuby
       expected = AST::ProgramNode.new(
         statements: [
           AST::ExpressionStatementNode.new(
-            expression: AST::CallNode.new(
+            expression: AST::FunctionCallNode.new(
               name:      'foo',
               arguments: [
                 AST::IntegerLiteralNode.new(value: '1'),
@@ -970,11 +981,11 @@ module MiniRuby
       expected = AST::ProgramNode.new(
         statements: [
           AST::ExpressionStatementNode.new(
-            expression: AST::CallNode.new(
+            expression: AST::FunctionCallNode.new(
               name:      'foo',
               arguments: [
                 AST::IntegerLiteralNode.new(value: '1'),
-                AST::CallNode.new(
+                AST::FunctionCallNode.new(
                   name:      'bar',
                   arguments: [
                     AST::StringLiteralNode.new(value: 'baz'),

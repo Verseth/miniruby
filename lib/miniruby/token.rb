@@ -63,21 +63,10 @@ module MiniRuby
           'STRING'
         when IDENTIFIER
           'IDENTIFIER'
-        when WHILE
-          'while'
-        when RETURN
-          'return'
-        when FALSE
-          'false'
-        when TRUE
-          'true'
-        when NIL
-          'nil'
-        when END_K
-          'end'
-        when ELSE
-          'else'
         else
+          t = type.to_s
+          return t if KEYWORDS.include?(t)
+
           '<invalid>'
         end
       end
@@ -206,23 +195,10 @@ module MiniRuby
         value.to_s
       when STRING
         T.cast(value.inspect, String)
-      when FALSE
-        'false'
-      when TRUE
-        'true'
-      when NIL
-        'nil'
-      when IF
-        'if'
-      when WHILE
-        'while'
-      when RETURN
-        'return'
-      when END_K
-        'end'
-      when ELSE
-        'else'
       else
+        t = type.to_s
+        return t if KEYWORDS.include?(t)
+
         '<invalid>'
       end
     end
@@ -243,6 +219,7 @@ module MiniRuby
         'return',
         'end',
         'else',
+        'self',
       ],
       T::Set[String],
     )
@@ -317,5 +294,7 @@ module MiniRuby
     END_K = :end
     # Keyword `else`
     ELSE = :else
+    # Keyword `self`
+    SELF = :self
   end
 end

@@ -495,8 +495,8 @@ module MiniRuby
       end
     end
 
-    # Represents a call like `foo(1, bar)`
-    class CallNode < ExpressionNode
+    # Represents a function call like `foo(1, bar)`
+    class FunctionCallNode < ExpressionNode
       sig { returns(String) }
       attr_reader :name
 
@@ -518,7 +518,7 @@ module MiniRuby
 
       sig { params(other: Object).returns(T::Boolean) }
       def ==(other)
-        return false unless other.is_a?(CallNode)
+        return false unless other.is_a?(FunctionCallNode)
 
         @name == other.name &&
           @arguments == other.arguments
@@ -590,6 +590,19 @@ module MiniRuby
       sig { override.params(indent: Integer).returns(String) }
       def inspect(indent = 0)
         "#{INDENT_UNIT * indent}nil"
+      end
+    end
+
+    # Represents a self literal eg. `self`
+    class SelfLiteralNode < ExpressionNode
+      sig { override.params(indent: Integer).returns(String) }
+      def to_s(indent = 0)
+        "#{INDENT_UNIT * indent}self"
+      end
+
+      sig { override.params(indent: Integer).returns(String) }
+      def inspect(indent = 0)
+        "#{INDENT_UNIT * indent}self"
       end
     end
 

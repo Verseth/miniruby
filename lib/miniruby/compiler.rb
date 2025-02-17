@@ -1,6 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
+require_relative 'call_info'
+
 module MiniRuby
   # MiniRuby bytecode compiler.
   # Takes in an AST and produces a bytecode function
@@ -166,6 +168,8 @@ module MiniRuby
         emit(Opcode::TRUE)
       when AST::FalseLiteralNode
         emit(Opcode::FALSE)
+      when AST::SelfLiteralNode
+        emit(Opcode::SELF)
       when AST::IntegerLiteralNode
         emit_value(Integer(node.value))
       when AST::FloatLiteralNode
@@ -186,7 +190,24 @@ module MiniRuby
         compile_if_expression(node)
       when AST::WhileExpressionNode
         compile_while_expression(node)
+      when AST::FunctionCallNode
+        compile_function_call(node)
       end
+    end
+
+    sig { params(node: AST::FunctionCallNode).void }
+    def compile_function_call(node)
+      emit(Opcode::SELF)
+
+      node.arguments.each do |arg|
+        compile_expression(arg)
+      end
+
+      call_info = CallInfo.new(
+        name:      node.name.to_sym,
+        arg_count: node.arguments.length,
+      )
+      emit_load_value(call_info, Opcode::CALL)
     end
 
     sig { params(node: AST::WhileExpressionNode).void }
@@ -373,15 +394,15 @@ module MiniRuby
     MAX_VALUES = 256
 
     # Emits code that loads a value from the value pool
-    sig { params(value: Object).returns(Integer) }
-    def emit_load_value(value)
+    sig { params(value: Object, opcode: Integer).returns(Integer) }
+    def emit_load_value(value, opcode = Opcode::LOAD_VALUE)
       index = @bytecode.add_value(value)
       if index >= MAX_VALUES
         @errors << "value pool limit reached: #{MAX_VALUES}"
         return -1
       end
 
-      emit(Opcode::LOAD_VALUE, index)
+      emit(opcode, index)
       index
     end
 

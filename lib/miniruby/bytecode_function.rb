@@ -150,7 +150,7 @@ module MiniRuby
         Opcode::ADD, Opcode::SUBTRACT, Opcode::MULTIPLY,
         Opcode::DIVIDE, Opcode::NEGATE, Opcode::EQUAL,
         Opcode::GREATER, Opcode::GREATER_EQUAL, Opcode::LESS, Opcode::LESS_EQUAL,
-        Opcode::NOT, Opcode::TRUE, Opcode::FALSE, Opcode::NIL, Opcode::RETURN
+        Opcode::NOT, Opcode::TRUE, Opcode::FALSE, Opcode::NIL, Opcode::RETURN, Opcode::SELF
 
         disassemble_one_byte_instruction(out, Opcode.name(opcode), offset)
       when Opcode::GET_LOCAL, Opcode::SET_LOCAL, Opcode::PREP_LOCALS,

@@ -85,6 +85,15 @@ module MiniRuby
         ),
       )
       assert_equal expected, result
+
+      result = compile('self')
+      expected = BytecodeFunction.new(
+        instructions: pack(
+          Opcode::SELF,
+          Opcode::RETURN,
+        ),
+      )
+      assert_equal expected, result
     end
 
     def test_locals
@@ -155,6 +164,56 @@ module MiniRuby
         ),
         value_pool:   [
           5,
+        ],
+      )
+      assert_equal expected, result
+    end
+
+    def test_function_call
+      result = compile('foo()')
+      expected = BytecodeFunction.new(
+        instructions: pack(
+          Opcode::SELF,
+          Opcode::CALL, 0,
+          Opcode::RETURN,
+        ),
+        value_pool:   [
+          CallInfo.new(name: :foo, arg_count: 0),
+        ],
+      )
+      assert_equal expected, result
+
+      result = compile('foo(1)')
+      expected = BytecodeFunction.new(
+        instructions: pack(
+          Opcode::SELF,
+          Opcode::LOAD_VALUE, 0,
+          Opcode::CALL, 1,
+          Opcode::RETURN,
+        ),
+        value_pool:   [
+          1,
+          CallInfo.new(name: :foo, arg_count: 1),
+        ],
+      )
+      assert_equal expected, result
+
+      result = compile('foo(1 + 2, "bar")')
+      expected = BytecodeFunction.new(
+        instructions: pack(
+          Opcode::SELF,
+          Opcode::LOAD_VALUE, 0,
+          Opcode::LOAD_VALUE, 1,
+          Opcode::ADD,
+          Opcode::LOAD_VALUE, 2,
+          Opcode::CALL, 3,
+          Opcode::RETURN,
+        ),
+        value_pool:   [
+          1,
+          2,
+          'bar',
+          CallInfo.new(name: :foo, arg_count: 2),
         ],
       )
       assert_equal expected, result

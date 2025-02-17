@@ -193,7 +193,7 @@ module MiniRuby
       left
     end
 
-    # unary_expression = call | ("!" | "-" | "+") unaryExpression
+    # unary_expression = function_call | ("!" | "-" | "+") unary_expression
     sig { returns(AST::ExpressionNode) }
     def parse_unary_expression
       if (operator = match(Token::BANG, Token::MINUS, Token::PLUS))
@@ -208,12 +208,12 @@ module MiniRuby
         )
       end
 
-      parse_call
+      parse_function_call
     end
 
-    # call = IDENTIFIER "(" argument_list ")" | primary_expression
+    # function_call = IDENTIFIER "(" argument_list ")" | primary_expression
     sig { returns(AST::ExpressionNode) }
-    def parse_call
+    def parse_function_call
       ident = parse_primary_expression
       return ident unless ident.is_a?(AST::IdentifierNode) && match(Token::LPAREN)
 
@@ -225,7 +225,7 @@ module MiniRuby
       return AST::InvalidNode.new(span: rparen.span, token: rparen) unless ok
 
       span = ident.span.join(rparen.span)
-      AST::CallNode.new(
+      AST::FunctionCallNode.new(
         span:,
         name:      ident.value,
         arguments: arg_list,
@@ -262,6 +262,9 @@ module MiniRuby
       when Token::NIL
         tok = advance
         AST::NilLiteralNode.new(span: tok.span)
+      when Token::SELF
+        tok = advance
+        AST::SelfLiteralNode.new(span: tok.span)
       when Token::INTEGER
         tok = advance
         AST::IntegerLiteralNode.new(span: tok.span, value: T.must(tok.value))
