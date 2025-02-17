@@ -13,6 +13,8 @@ gem 'minitest', '~> 5.16' # test framework
 
 gem 'rubocop', '~> 1.21' # linter
 
+gem 'rubocop-sorbet', '~> 0.8' # linter config
+
 gem 'rubocop-espago', '~> 1.1' # linter config
 
 gem 'debug', '~> 1.9' # debugger

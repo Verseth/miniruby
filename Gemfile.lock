@@ -59,6 +59,8 @@ GEM
       parser (>= 3.3.1.0)
     rubocop-espago (1.1.6)
       rubocop
+    rubocop-sorbet (0.8.7)
+      rubocop (>= 1)
     ruby-progressbar (1.13.0)
     sorbet (0.5.11823)
       sorbet-static (= 0.5.11823)
@@ -104,6 +106,7 @@ DEPENDENCIES
   rake (~> 13.0)
   rubocop (~> 1.21)
   rubocop-espago (~> 1.1)
+  rubocop-sorbet (~> 0.8)
   sorbet (~> 0.5)
   tapioca (~> 0.16)
 

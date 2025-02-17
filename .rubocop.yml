@@ -2,7 +2,7 @@ AllCops:
   TargetRubyVersion: 3.1
 
 inherit_gem:
-  rubocop-espago: rubocop.yml
+  rubocop-espago: sorbet.yml
 
 Lint/BooleanSymbol:
   Enabled: false
@@ -53,4 +53,19 @@ Style/FormatStringToken:
   Enabled: false
 
 Layout/EmptyLinesAroundArguments:
+  Enabled: false
+
+Naming/BlockForwarding:
+  Enabled: false
+
+Sorbet/RedundantExtendTSig:
+  Enabled: false
+
+Sorbet/ForbidTUnsafe:
+  Enabled: false
+
+Sorbet/ForbidTypeAliasedShapes:
+  Enabled: false
+
+Sorbet/ForbidTUntyped:
   Enabled: false

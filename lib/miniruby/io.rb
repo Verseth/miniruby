@@ -9,6 +9,9 @@ module MiniRuby
 
     interface!
 
+    sig { abstract.returns(String) }
+    def gets; end
+
     sig { abstract.params(v: Object).void }
     def puts(*v); end
 

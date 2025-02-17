@@ -29,6 +29,7 @@ module MiniRuby
       sig { params(errors: T::Array[String]).void }
       def initialize(errors)
         @errors = errors
+        super(@errors.join('; '))
       end
 
       sig { params(other: Object).returns(T::Boolean) }
@@ -56,7 +57,7 @@ module MiniRuby
           span:     Span,
         ).returns(BytecodeFunction)
       end
-      def compile_node(node:, name: '<main>', filename: '<main>', span: Span::ZERO)
+      def compile_node(node, name: '<main>', filename: '<main>', span: Span::ZERO)
         compiler = new(name:, filename:, span:)
         compiler.compile_program(node)
         raise Error.new(compiler.errors) if compiler.err?
@@ -72,7 +73,7 @@ module MiniRuby
           filename: String,
         ).returns(BytecodeFunction)
       end
-      def compile_source(source:, name: '<main>', filename: '<main>')
+      def compile_source(source, name: '<main>', filename: '<main>')
         result = Parser.parse(source)
         raise Error.new(result.errors) if result.err?
 

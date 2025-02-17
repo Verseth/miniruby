@@ -630,7 +630,7 @@ module MiniRuby
 
     sig { params(source: String).returns(BytecodeFunction) }
     def compile(source)
-      Compiler.compile_source(source:)
+      Compiler.compile_source(source)
     end
   end
 end
