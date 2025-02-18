@@ -80,6 +80,7 @@ module MiniRuby
         error_expected('a statement separator')
       end
 
+      swallow_statement_separators
       AST::ExpressionStatementNode.new(expression:, span:)
     end
 

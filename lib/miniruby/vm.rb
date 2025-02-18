@@ -26,10 +26,10 @@ module MiniRuby
         vm.stack_top
       end
 
-      sig { params(source: String, name: String, filename: String).returns(Object) }
-      def interpret(source, name: '<main>', filename: '<main>')
+      sig { params(source: String, name: String, filename: String, stdout: IO, stdin: IO).returns(Object) }
+      def interpret(source, name: '<main>', filename: '<main>', stdout: $stdout, stdin: $stdin)
         bytecode = Compiler.compile_source(source, name:, filename:)
-        run(bytecode)
+        run(bytecode, stdout:, stdin:)
       end
     end
 
@@ -87,7 +87,10 @@ module MiniRuby
       vm.stdout.puts(args[1])
     end
     define :gets do |vm, _args|
-      vm.stdout.gets
+      vm.stdin.gets
+    end
+    define :len, 1 do |_vm, args|
+      T.unsafe(args[1]).length
     end
 
     sig { void }
@@ -197,7 +200,7 @@ module MiniRuby
 
     sig { returns Object }
     def stack_top
-      @stack[@sp-1]
+      @stack[@sp - 1]
     end
 
     private

@@ -69,3 +69,6 @@ Sorbet/ForbidTypeAliasedShapes:
 
 Sorbet/ForbidTUntyped:
   Enabled: false
+
+Style/MethodCallWithoutArgsParentheses:
+  Enabled: false
