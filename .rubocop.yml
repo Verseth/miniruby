@@ -1,5 +1,5 @@
 AllCops:
-  TargetRubyVersion: 3.1
+  TargetRubyVersion: 3.2
 
 inherit_gem:
   rubocop-espago: sorbet.yml
@@ -71,4 +71,7 @@ Sorbet/ForbidTUntyped:
   Enabled: false
 
 Style/MethodCallWithoutArgsParentheses:
+  Enabled: false
+
+Lint/RedundantRequireStatement:
   Enabled: false
