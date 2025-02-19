@@ -33,29 +33,29 @@ module MiniRuby
       Parser.parse(source)
     end
 
-    # Compile the MiniRuby source.
-    # Returns a chunk of compiled bytecode.
-    sig do
-      params(
-        source: String,
-      ).returns(BytecodeFunction)
-    end
-    def compile(source)
-      Compiler.compile_source(source)
-    end
+    # # Compile the MiniRuby source.
+    # # Returns a chunk of compiled bytecode.
+    # sig do
+    #   params(
+    #     source: String,
+    #   ).returns(BytecodeFunction)
+    # end
+    # def compile(source)
+    #   Compiler.compile_source(source)
+    # end
 
-    # Interpret the MiniRuby source with the Virtual Machine.
-    # Returns the last computed value.
-    sig do
-      params(
-        source: String,
-        stdout: IO,
-        stdin:  IO,
-      ).returns(Object)
-    end
-    def interpret(source, stdout: $stdout, stdin: $stdin)
-      VM.interpret(source, stdout:, stdin:)
-    end
+    # # Interpret the MiniRuby source with the Virtual Machine.
+    # # Returns the last computed value.
+    # sig do
+    #   params(
+    #     source: String,
+    #     stdout: IO,
+    #     stdin:  IO,
+    #   ).returns(Object)
+    # end
+    # def interpret(source, stdout: $stdout, stdin: $stdin)
+    #   VM.interpret(source, stdout:, stdin:)
+    # end
   end
 end
 
