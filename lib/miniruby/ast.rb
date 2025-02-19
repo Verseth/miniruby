@@ -303,7 +303,7 @@ module MiniRuby
         buff = String.new
         buff << "#{INDENT_UNIT * indent}(unary_expr"
 
-        buff << "\n" << @operator.to_s
+        buff << "\n#{INDENT_UNIT * (indent + 1)}#{@operator}"
         buff << "\n" << @value.inspect(indent + 1)
 
         buff << ')'
@@ -484,7 +484,7 @@ module MiniRuby
 
         buff << "\n" << @condition.inspect(indent + 1)
 
-        buff << "#{INDENT_UNIT * (indent + 1)}(then"
+        buff << "\n#{INDENT_UNIT * (indent + 1)}(then"
         @then_body.each do |stmt|
           buff << "\n" << stmt.inspect(indent + 2)
         end
