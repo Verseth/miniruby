@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+## [0.4.0] - 2026-04-16
+- Add new parser capabilities:
+  - Add raw strings `'foo\nbar'`
+
 ## [0.3.0] - 2026-04-15
 - Add new parser capabilities:
   - Add `&&`, `||`, `??`

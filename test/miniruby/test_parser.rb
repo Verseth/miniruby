@@ -84,6 +84,30 @@ module MiniRuby
       assert_equal expected, result.ast
     end
 
+    def test_raw_string
+      result = parse("'foo'")
+      expected = AST::ProgramNode.new(
+        statements: [
+          AST::ExpressionStatementNode.new(
+            expression: AST::StringLiteralNode.new(value: 'foo'),
+          ),
+        ],
+      )
+      assert_equal false, result.err?
+      assert_equal expected, result.ast
+
+      result = parse('\'bar\n\t\'')
+      expected = AST::ProgramNode.new(
+        statements: [
+          AST::ExpressionStatementNode.new(
+            expression: AST::StringLiteralNode.new(value: 'bar\n\t'),
+          ),
+        ],
+      )
+      assert_equal false, result.err?
+      assert_equal expected, result.ast
+    end
+
     def test_float
       result = parse('12.4')
       expected = AST::ProgramNode.new(

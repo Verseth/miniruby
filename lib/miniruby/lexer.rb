@@ -212,6 +212,8 @@ module MiniRuby
           return token(Token::SLASH)
         when '"'
           return scan_string
+        when "'"
+          return scan_raw_string
         when "\n"
           return token(Token::NEWLINE)
         when ' ', "\r", "\t"
@@ -391,5 +393,18 @@ module MiniRuby
         end
       end
     end
+
+    #: -> Token
+    def scan_raw_string
+      value_buffer = String.new
+      loop do
+        char, ok = advance_char
+        return token(Token::ERROR, 'unterminated string literal') unless ok
+        return token(Token::STRING, value_buffer) if char == "'"
+
+        value_buffer << char
+      end
+    end
+
   end
 end
