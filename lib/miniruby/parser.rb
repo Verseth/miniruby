@@ -113,13 +113,15 @@ module MiniRuby
       parse_assignment_expression
     end
 
-    # assignment_expression = expression "=" assignment_expression | equality_expression
+    # assignment_expression = expression "=" assignment_expression | logical_or_expression
     #: -> AST::ExpressionNode
     def parse_assignment_expression
-      target = parse_equality_expression
+      target = parse_logical_or_expression
       return target unless match(Token::EQUAL)
 
-      unless target.is_a?(AST::IdentifierNode)
+      case target
+      when AST::IdentifierNode, AST::AttributeAccessExpressionNode
+      else
         add_error("unexpected `#{target.class}`, expected an identifier")
       end
       swallow_newlines
@@ -127,6 +129,50 @@ module MiniRuby
       span = target.span.join(value.span)
 
       AST::AssignmentExpressionNode.new(span:, target:, value:)
+    end
+
+    # logical_or_expression = logical_and_expression | logical_or_expression ("||" | "??") logical_and_expression
+    #: -> AST::ExpressionNode
+    def parse_logical_or_expression
+      left = parse_logical_and_expression
+
+      while @lookahead.logical_orlike_operator?
+        operator = advance
+        swallow_newlines
+
+        right = parse_logical_and_expression
+        span = left.span.join(right.span)
+        left = AST::BinaryExpressionNode.new(
+          span:,
+          operator:,
+          left:,
+          right:,
+        )
+      end
+
+      left
+    end
+
+    # logical_and_expression = equality_expression | logical_and_expression "&&" equality_expression
+    #: -> AST::ExpressionNode
+    def parse_logical_and_expression
+      left = parse_equality_expression
+
+      while @lookahead.logical_and_operator?
+        operator = advance
+        swallow_newlines
+
+        right = parse_equality_expression
+        span = left.span.join(right.span)
+        left = AST::BinaryExpressionNode.new(
+          span:,
+          operator:,
+          left:,
+          right:,
+        )
+      end
+
+      left
     end
 
     # equality_expression = equality_expression ("==" | "!=") comparison_expression | comparison_expression

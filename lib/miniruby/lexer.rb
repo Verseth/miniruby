@@ -190,6 +190,18 @@ module MiniRuby
           return token(Token::LESS_EQUAL) if match_char('=')
 
           return token(Token::LESS)
+        when '&'
+          return token(Token::AND_AND) if match_char('&')
+
+          return token(Token::AND)
+        when '|'
+          return token(Token::OR_OR) if match_char('|')
+
+          return token(Token::OR)
+        when '?'
+          return token(Token::QUESTION_QUESTION) if match_char('?')
+
+          return token(Token::ERROR)
         when '+'
           return token(Token::PLUS)
         when '-'

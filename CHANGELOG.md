@@ -1,5 +1,10 @@
 ## [Unreleased]
 
+## [0.3.0] - 2026-04-15
+- Add new parser capabilities:
+  - Add `&&`, `||`, `??`
+  - Set attributes
+
 ## [0.2.0] - 2026-04-15
 - Add new parser capabilities:
   - Add `break`, `next`, `unless`

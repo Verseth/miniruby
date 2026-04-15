@@ -970,6 +970,65 @@ module MiniRuby
       assert_equal expected, result.ast
     end
 
+    def test_logical_operators
+      result = parse('a || b || c')
+      expected = AST::ProgramNode.new(
+        statements: [
+          AST::ExpressionStatementNode.new(
+            expression: AST::BinaryExpressionNode.new(
+              operator: Token.new(Token::OR_OR, S(P(7), P(8))),
+              left:     AST::BinaryExpressionNode.new(
+                operator: Token.new(Token::OR_OR, S(P(2), P(3))),
+                left:     AST::IdentifierNode.new(value: 'a'),
+                right:    AST::IdentifierNode.new(value: 'b'),
+              ),
+              right:    AST::IdentifierNode.new(value: 'c'),
+            ),
+          ),
+        ],
+      )
+      assert_equal false, result.err?
+      assert_equal expected, result.ast
+
+      result = parse('a && b && c')
+      expected = AST::ProgramNode.new(
+        statements: [
+          AST::ExpressionStatementNode.new(
+            expression: AST::BinaryExpressionNode.new(
+              operator: Token.new(Token::AND_AND, S(P(7), P(8))),
+              left:     AST::BinaryExpressionNode.new(
+                operator: Token.new(Token::AND_AND, S(P(2), P(3))),
+                left:     AST::IdentifierNode.new(value: 'a'),
+                right:    AST::IdentifierNode.new(value: 'b'),
+              ),
+              right:    AST::IdentifierNode.new(value: 'c'),
+            ),
+          ),
+        ],
+      )
+      assert_equal false, result.err?
+      assert_equal expected, result.ast
+
+      result = parse('a || b && c')
+      expected = AST::ProgramNode.new(
+        statements: [
+          AST::ExpressionStatementNode.new(
+            expression: AST::BinaryExpressionNode.new(
+              operator: Token.new(Token::OR_OR, S(P(2), P(3))),
+              left:     AST::IdentifierNode.new(value: 'a'),
+              right:    AST::BinaryExpressionNode.new(
+                operator: Token.new(Token::AND_AND, S(P(7), P(7))),
+                left:     AST::IdentifierNode.new(value: 'b'),
+                right:    AST::IdentifierNode.new(value: 'c'),
+              ),
+            ),
+          ),
+        ],
+      )
+      assert_equal false, result.err?
+      assert_equal expected, result.ast
+    end
+
     def test_equality_operators
       result = parse('a == b != c')
       expected = AST::ProgramNode.new(
@@ -1040,6 +1099,23 @@ module MiniRuby
                 target: AST::IdentifierNode.new(value: 'b'),
                 value:  AST::IdentifierNode.new(value: 'c'),
               ),
+            ),
+          ),
+        ],
+      )
+      assert_equal false, result.err?
+      assert_equal expected, result.ast
+
+      result = parse('a.b = c')
+      expected = AST::ProgramNode.new(
+        statements: [
+          AST::ExpressionStatementNode.new(
+            expression: AST::AssignmentExpressionNode.new(
+              target: AST::AttributeAccessExpressionNode.new(
+                receiver: AST::IdentifierNode.new(value: 'a'),
+                field:    AST::IdentifierNode.new(value: 'b'),
+              ),
+              value:  AST::IdentifierNode.new(value: 'c'),
             ),
           ),
         ],

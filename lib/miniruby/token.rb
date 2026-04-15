@@ -48,6 +48,16 @@ module MiniRuby
           '<'
         when LESS_EQUAL
           '<='
+        when AND_AND
+          '&&'
+        when AND
+          '&'
+        when OR_OR
+          '||'
+        when OR
+          '|'
+        when QUESTION_QUESTION
+          '??'
         when PLUS
           '+'
         when MINUS
@@ -143,6 +153,36 @@ module MiniRuby
       end
     end
 
+    #: -> bool
+    def logical_operator?
+      case @type
+      when OR_OR, AND_AND, QUESTION_QUESTION
+        true
+      else
+        false
+      end
+    end
+
+    #: -> bool
+    def logical_orlike_operator?
+      case @type
+      when OR_OR, QUESTION_QUESTION
+        true
+      else
+        false
+      end
+    end
+
+    #: -> bool
+    def logical_and_operator?
+      case @type
+      when AND_AND
+        true
+      else
+        false
+      end
+    end
+
     #: -> String
     def type_name
       self.class.type_to_string(@type)
@@ -186,6 +226,16 @@ module MiniRuby
         '<'
       when LESS_EQUAL
         '<='
+      when AND_AND
+        '&&'
+      when AND
+        '&'
+      when OR_OR
+        '||'
+      when OR
+        '|'
+      when QUESTION_QUESTION
+        '??'
       when PLUS
         '+'
       when MINUS
@@ -266,6 +316,16 @@ module MiniRuby
     LESS = :less
     # Less equal `<=`
     LESS_EQUAL = :less_equal
+    # Logical and `&&`
+    AND_AND = :and_and
+    # Bitwise and `&`
+    AND = :and
+    # Logical or `||`
+    OR_OR = :or_or
+    # Bitwise or `|`
+    OR = :or
+    # Nil coalescence `??`
+    QUESTION_QUESTION = :question_question
     # Plus `+`
     PLUS = :plus
     # Minus `-`
