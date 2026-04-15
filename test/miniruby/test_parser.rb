@@ -106,24 +106,6 @@ module MiniRuby
       )
       assert_equal false, result.err?
       assert_equal expected, result.ast
-
-      result = parse('12.4.5')
-      expected = AST::ProgramNode.new(
-        statements: [
-          AST::ExpressionStatementNode.new(
-            expression: AST::FloatLiteralNode.new(value: '12.4'),
-          ),
-          AST::ExpressionStatementNode.new(
-            expression: AST::InvalidNode.new(token: Token.new(Token::ERROR, S(P(4), P(4)), 'unexpected char `.`')),
-          ),
-          AST::ExpressionStatementNode.new(
-            expression: AST::IntegerLiteralNode.new(value: '5'),
-          ),
-        ],
-      )
-      assert_equal true, result.err?
-      assert_equal ['unexpected char `.`', 'unexpected INTEGER, expected a statement separator'], result.errors
-      assert_equal expected, result.ast
     end
 
     def test_simple_literal
@@ -258,6 +240,98 @@ module MiniRuby
             expression: AST::AssignmentExpressionNode.new(
               target: AST::IdentifierNode.new(value: 'a'),
               value:  AST::ReturnExpressionNode.new(
+                value: AST::IntegerLiteralNode.new(value: '5'),
+              ),
+            ),
+          ),
+        ],
+      )
+      assert_equal false, result.err?
+      assert_equal expected, result.ast
+    end
+
+    def test_break
+      result = parse('break')
+      expected = AST::ProgramNode.new(
+        statements: [
+          AST::ExpressionStatementNode.new(
+            expression: AST::BreakExpressionNode.new,
+          ),
+        ],
+      )
+      assert_equal false, result.err?
+      assert_equal expected, result.ast
+
+      result = parse('break foo + 2')
+      expected = AST::ProgramNode.new(
+        statements: [
+          AST::ExpressionStatementNode.new(
+            expression: AST::BreakExpressionNode.new(
+              value: AST::BinaryExpressionNode.new(
+                operator: Token.new(Token::PLUS, S(P(11), P(11))),
+                left:     AST::IdentifierNode.new(value: 'foo'),
+                right:    AST::IntegerLiteralNode.new(value: '2'),
+              ),
+            ),
+          ),
+        ],
+      )
+      assert_equal false, result.err?
+      assert_equal expected, result.ast
+
+      result = parse('a = break 5')
+      expected = AST::ProgramNode.new(
+        statements: [
+          AST::ExpressionStatementNode.new(
+            expression: AST::AssignmentExpressionNode.new(
+              target: AST::IdentifierNode.new(value: 'a'),
+              value:  AST::BreakExpressionNode.new(
+                value: AST::IntegerLiteralNode.new(value: '5'),
+              ),
+            ),
+          ),
+        ],
+      )
+      assert_equal false, result.err?
+      assert_equal expected, result.ast
+    end
+
+    def test_next
+      result = parse('next')
+      expected = AST::ProgramNode.new(
+        statements: [
+          AST::ExpressionStatementNode.new(
+            expression: AST::NextExpressionNode.new,
+          ),
+        ],
+      )
+      assert_equal false, result.err?
+      assert_equal expected, result.ast
+
+      result = parse('next foo + 2')
+      expected = AST::ProgramNode.new(
+        statements: [
+          AST::ExpressionStatementNode.new(
+            expression: AST::NextExpressionNode.new(
+              value: AST::BinaryExpressionNode.new(
+                operator: Token.new(Token::PLUS, S(P(11), P(11))),
+                left:     AST::IdentifierNode.new(value: 'foo'),
+                right:    AST::IntegerLiteralNode.new(value: '2'),
+              ),
+            ),
+          ),
+        ],
+      )
+      assert_equal false, result.err?
+      assert_equal expected, result.ast
+
+      result = parse('a = next 5')
+      expected = AST::ProgramNode.new(
+        statements: [
+          AST::ExpressionStatementNode.new(
+            expression: AST::AssignmentExpressionNode.new(
+              target: AST::IdentifierNode.new(value: 'a'),
+              value:  AST::NextExpressionNode.new(
                 value: AST::IntegerLiteralNode.new(value: '5'),
               ),
             ),
@@ -510,6 +584,125 @@ module MiniRuby
                   ),
                 ),
               ],
+            ),
+          ),
+        ],
+      )
+      assert_equal false, result.err?
+      assert_equal expected, result.ast
+    end
+
+    def test_unless
+      result = parse(<<~RUBY)
+        unless a != 5
+          a = a + 2
+          !a
+        end
+      RUBY
+      expected = AST::ProgramNode.new(
+        statements: [
+          AST::ExpressionStatementNode.new(
+            expression: AST::UnlessExpressionNode.new(
+              condition: AST::BinaryExpressionNode.new(
+                operator: Token.new(Token::NOT_EQUAL, S(P(8), P(9))),
+                left:     AST::IdentifierNode.new(value: 'a'),
+                right:    AST::IntegerLiteralNode.new(value: '5'),
+              ),
+              then_body: [
+                AST::ExpressionStatementNode.new(
+                  expression: AST::AssignmentExpressionNode.new(
+                    target: AST::IdentifierNode.new(value: 'a'),
+                    value:  AST::BinaryExpressionNode.new(
+                      operator: Token.new(Token::PLUS, S(P(15), P(15))),
+                      left:     AST::IdentifierNode.new(value: 'a'),
+                      right:    AST::IntegerLiteralNode.new(value: '2'),
+                    ),
+                  ),
+                ),
+                AST::ExpressionStatementNode.new(
+                  expression: AST::UnaryExpressionNode.new(
+                    operator: Token.new(Token::BANG, S(P(22), P(22))),
+                    value:    AST::IdentifierNode.new(value: 'a'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      )
+      assert_equal false, result.err?
+      assert_equal expected, result.ast
+    end
+
+    def test_modifier
+      result = parse(<<~RUBY)
+        return 5 if foo
+      RUBY
+      expected = AST::ProgramNode.new(
+        statements: [
+          AST::ExpressionStatementNode.new(
+            expression: AST::ModifierExpressionNode.new(
+              operator: Token.new(Token::IF, Span::ZERO),
+              left:     AST::ReturnExpressionNode.new(
+                value: AST::IntegerLiteralNode.new(value: '5'),
+              ),
+              right:    AST::IdentifierNode.new(value: 'foo'),
+            ),
+          ),
+        ],
+      )
+      assert_equal false, result.err?
+      assert_equal expected, result.ast
+
+      result = parse(<<~RUBY)
+        return 5 unless foo
+      RUBY
+      expected = AST::ProgramNode.new(
+        statements: [
+          AST::ExpressionStatementNode.new(
+            expression: AST::ModifierExpressionNode.new(
+              operator: Token.new(Token::UNLESS, Span::ZERO),
+              left:     AST::ReturnExpressionNode.new(
+                value: AST::IntegerLiteralNode.new(value: '5'),
+              ),
+              right:    AST::IdentifierNode.new(value: 'foo'),
+            ),
+          ),
+        ],
+      )
+      assert_equal false, result.err?
+      assert_equal expected, result.ast
+    end
+
+    def test_attribute
+      result = parse(<<~RUBY)
+        foo.bar
+      RUBY
+      expected = AST::ProgramNode.new(
+        statements: [
+          AST::ExpressionStatementNode.new(
+            expression: AST::AttributeAccessExpressionNode.new(
+              receiver: AST::IdentifierNode.new(value: 'foo'),
+              field:    AST::IdentifierNode.new(value: 'bar'),
+            ),
+          ),
+        ],
+      )
+      assert_equal false, result.err?
+      assert_equal expected, result.ast
+
+      result = parse(<<~RUBY)
+        foo.bar.baz
+      RUBY
+      expected = AST::ProgramNode.new(
+        statements: [
+          AST::ExpressionStatementNode.new(
+            expression: AST::AttributeAccessExpressionNode.new(
+              receiver: AST::AttributeAccessExpressionNode.new(
+                receiver: AST::IdentifierNode.new(value: 'foo'),
+                field:    AST::IdentifierNode.new(value: 'bar'),
+              ),
+              field:    AST::IdentifierNode.new(value: 'baz'),
             ),
           ),
         ],

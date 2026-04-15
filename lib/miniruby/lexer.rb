@@ -166,6 +166,8 @@ module MiniRuby
         case char
         when ','
           return token(Token::COMMA)
+        when '.'
+          return token(Token::DOT)
         when ';'
           return token(Token::SEMICOLON)
         when '('

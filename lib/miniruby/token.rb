@@ -26,6 +26,8 @@ module MiniRuby
           ')'
         when COMMA
           ','
+        when DOT
+          '.'
         when SEMICOLON
           ';'
         when NEWLINE
@@ -162,6 +164,8 @@ module MiniRuby
         ')'
       when COMMA
         ','
+      when DOT
+        '.'
       when SEMICOLON
         ';'
       when NEWLINE
@@ -213,8 +217,11 @@ module MiniRuby
       'true',
       'nil',
       'if',
+      'unless',
       'while',
       'return',
+      'break',
+      'next',
       'end',
       'else',
       'self',
@@ -237,6 +244,8 @@ module MiniRuby
     RPAREN = :rparen
     # Comma `,`
     COMMA = :comma
+    # Dot `.`
+    DOT = :dot
     # Semicolon `;`
     SEMICOLON = :semicolon
     # Newline
@@ -282,10 +291,16 @@ module MiniRuby
     NIL = :nil
     # Keyword `if`
     IF = :if
+    # Keyword `unless`
+    UNLESS = :unless
     # Keyword `while`
     WHILE = :while
     # Keyword `return`
     RETURN = :return
+    # Keyword `break`
+    BREAK = :break
+    # Keyword `next`
+    NEXT = :next
     # Keyword `end`
     END_K = :end
     # Keyword `else`

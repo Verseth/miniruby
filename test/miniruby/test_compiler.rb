@@ -54,7 +54,11 @@ module MiniRuby
       err = assert_raises Compiler::Error do
         compile('12.4.5')
       end
-      expected = Compiler::Error['unexpected char `.`', 'unexpected INTEGER, expected a statement separator']
+      expected = Compiler::Error[
+        'unexpected ., expected a statement separator',
+        'unexpected token ``',
+        'unexpected INTEGER, expected a statement separator',
+      ]
       assert_equal expected, err
     end
 

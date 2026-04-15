@@ -72,7 +72,7 @@ module MiniRuby
     # expression_statement = expression ("\n" | ";")
     #: -> AST::StatementNode
     def parse_expression_statement
-      expression = parse_expression
+      expression = parse_modifier_expression
       span = expression.span
       if (separator = match(Token::NEWLINE, Token::SEMICOLON, Token::END_OF_FILE))
         span = span.join(separator.span)
@@ -82,6 +82,29 @@ module MiniRuby
 
       swallow_statement_separators
       AST::ExpressionStatementNode.new(expression:, span:)
+    end
+
+    # modifier_expression = expression | expression ("if" | "unless") expression
+    #: -> AST::ExpressionNode
+    def parse_modifier_expression
+      left = parse_expression
+
+      case @lookahead.type
+      when Token::IF, Token::UNLESS
+        operator = advance
+        swallow_newlines
+
+        right = parse_expression
+        span = left.span.join(right.span)
+        left = AST::ModifierExpressionNode.new(
+          span:,
+          operator:,
+          left:,
+          right:,
+        )
+      else
+        left
+      end
     end
 
     # expression = assignment_expression
@@ -212,10 +235,10 @@ module MiniRuby
       parse_function_call
     end
 
-    # function_call = IDENTIFIER "(" argument_list ")" | primary_expression
+    # function_call = IDENTIFIER "(" argument_list ")" | attribute
     #: -> AST::ExpressionNode
     def parse_function_call
-      ident = parse_primary_expression
+      ident = parse_attribute
       return ident unless ident.is_a?(AST::IdentifierNode) && match(Token::LPAREN)
 
       swallow_newlines
@@ -252,6 +275,27 @@ module MiniRuby
     end
 
     #: -> AST::ExpressionNode
+    def parse_attribute
+      l = left = parse_primary_expression
+      return l unless l.is_a?(AST::IdentifierNode)
+
+      while true
+        return left unless match(Token::DOT)
+
+        name, ok = consume(Token::IDENTIFIER)
+        return AST::InvalidNode.new(span: name.span, token: name) unless ok
+
+        ident = AST::IdentifierNode.new(span: name.span, value: T.must(name.value))
+
+        left = AST::AttributeAccessExpressionNode.new(
+          span:     left.span.join(ident.span),
+          receiver: left,
+          field:    ident,
+        )
+      end
+    end
+
+    #: -> AST::ExpressionNode
     def parse_primary_expression
       case @lookahead.type
       when Token::FALSE
@@ -276,12 +320,17 @@ module MiniRuby
         tok = advance
         AST::StringLiteralNode.new(span: tok.span, value: T.must(tok.value))
       when Token::IDENTIFIER
-        tok = advance
-        AST::IdentifierNode.new(span: tok.span, value: T.must(tok.value))
+        parse_identifier
       when Token::RETURN
         parse_return_expression
+      when Token::BREAK
+        parse_break_expression
+      when Token::NEXT
+        parse_next_expression
       when Token::IF
         parse_if_expression
+      when Token::UNLESS
+        parse_unless_expression
       when Token::WHILE
         parse_while_expression
       when Token::LPAREN
@@ -293,11 +342,17 @@ module MiniRuby
       end
     end
 
+    #: -> AST::IdentifierNode
+    def parse_identifier
+      tok = advance
+      AST::IdentifierNode.new(span: tok.span, value: T.must(tok.value))
+    end
+
     # parenthesized_expression = "(" expression ")"
     #: -> AST::ExpressionNode
     def parse_parenthesized_expression
       lparen = advance
-      expr = parse_expression
+      expr = parse_modifier_expression
       rparen, = consume(Token::RPAREN)
       expr.span = lparen.span.join(rparen.span)
 
@@ -316,6 +371,34 @@ module MiniRuby
       span = return_token.span.join(value.span)
 
       AST::ReturnExpressionNode.new(span:, value:)
+    end
+
+    # break_expression = "break" [expression]
+    #: -> AST::BreakExpressionNode
+    def parse_break_expression
+      break_token = advance
+      if accept(Token::END_OF_FILE, Token::NEWLINE, Token::SEMICOLON)
+        return AST::BreakExpressionNode.new(span: break_token.span)
+      end
+
+      value = parse_expression
+      span = break_token.span.join(value.span)
+
+      AST::BreakExpressionNode.new(span:, value:)
+    end
+
+    # next_expression = "next" [expression]
+    #: -> AST::NextExpressionNode
+    def parse_next_expression
+      next_token = advance
+      if accept(Token::END_OF_FILE, Token::NEWLINE, Token::SEMICOLON)
+        return AST::NextExpressionNode.new(span: next_token.span)
+      end
+
+      value = parse_expression
+      span = next_token.span.join(value.span)
+
+      AST::NextExpressionNode.new(span:, value:)
     end
 
     # if_expression = "if" expression SEPARATOR statements ["else" (expression | SEPARATOR statements)] "end"
@@ -353,6 +436,26 @@ module MiniRuby
       end
 
       AST::IfExpressionNode.new(span:, condition:, then_body:, else_body:)
+    end
+
+    # unless_expression = "unless" expression SEPARATOR statements "end"
+    #: -> AST::ExpressionNode
+    def parse_unless_expression
+      unless_token = advance
+      condition = parse_expression
+
+      separator, ok = consume(Token::SEMICOLON, Token::NEWLINE)
+      return AST::InvalidNode.new(span: separator.span, token: separator) unless ok
+
+      then_body = parse_statements(Token::END_K)
+      span = unless_token.span
+
+      end_tok, ok = consume(Token::END_K)
+      return AST::InvalidNode.new(span: end_tok.span, token: end_tok) unless ok
+
+      span = span.join(end_tok.span)
+
+      AST::UnlessExpressionNode.new(span:, condition:, then_body:)
     end
 
     # if_expression = "while" expression SEPARATOR statements "end"

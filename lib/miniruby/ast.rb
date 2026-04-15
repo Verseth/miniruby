@@ -208,6 +208,98 @@ module MiniRuby
       end
     end
 
+    # Represents a modifier expression like `return 5 if foo`
+    class ModifierExpressionNode < ExpressionNode
+      #: Token
+      attr_reader :operator
+
+      #: ExpressionNode
+      attr_reader :left
+
+      #: ExpressionNode
+      attr_reader :right
+
+      #: (operator: Token, left: ExpressionNode, right: ExpressionNode, ?span: Span) -> void
+      def initialize(operator:, left:, right:, span: Span::ZERO)
+        @span = span
+        @operator = operator
+        @left = left
+        @right = right
+      end
+
+      #: (Object other) -> bool
+      def ==(other)
+        return false unless other.is_a?(ModifierExpressionNode)
+
+        @operator == other.operator &&
+          @left == other.left &&
+          @right == other.right
+      end
+
+      # @override
+      #: (?Integer indent) -> String
+      def to_s(indent = 0)
+        "#{INDENT_UNIT * indent}#{@left} #{@operator} #{@right}"
+      end
+
+      # @override
+      #: (?Integer indent) -> String
+      def inspect(indent = 0)
+        buff = String.new
+        buff << "#{INDENT_UNIT * indent}(modifier"
+
+        buff << "\n#{INDENT_UNIT * (indent + 1)}#{@operator}"
+        buff << "\n" << @left.inspect(indent + 1)
+        buff << "\n" << @right.inspect(indent + 1)
+
+        buff << ')'
+        buff
+      end
+    end
+
+    # Represents an attribute access expression like `foo.bar`
+    class AttributeAccessExpressionNode < ExpressionNode
+      #: ExpressionNode
+      attr_reader :receiver
+
+      #: IdentifierNode
+      attr_reader :field
+
+      #: (receiver: ExpressionNode, field: IdentifierNode, ?span: Span) -> void
+      def initialize(receiver:, field:, span: Span::ZERO)
+        @span = span
+        @receiver = receiver
+        @field = field
+      end
+
+      #: (Object other) -> bool
+      def ==(other)
+        return false unless other.is_a?(AttributeAccessExpressionNode)
+
+        @receiver == other.receiver &&
+          @field == other.field
+      end
+
+      # @override
+      #: (?Integer indent) -> String
+      def to_s(indent = 0)
+        "#{INDENT_UNIT * indent}#{@receiver}.#{@field}"
+      end
+
+      # @override
+      #: (?Integer indent) -> String
+      def inspect(indent = 0)
+        buff = String.new
+        buff << "#{INDENT_UNIT * indent}(attr"
+
+        buff << "\n" << @receiver.inspect(indent + 1)
+        buff << "\n" << @field.inspect(indent + 1)
+
+        buff << ')'
+        buff
+      end
+    end
+
     # Represents an identifier like `a`, `foo`
     class IdentifierNode < ExpressionNode
       #: String
@@ -365,6 +457,86 @@ module MiniRuby
       end
     end
 
+    # Represents a break like `break`, `break 1 + 5 * a`
+    class BreakExpressionNode < ExpressionNode
+      #: ExpressionNode?
+      attr_reader :value
+
+      #: (?value: ExpressionNode?, ?span: Span) -> void
+      def initialize(value: nil, span: Span::ZERO)
+        @span = span
+        @value = value
+      end
+
+      #: (Object other) -> bool
+      def ==(other)
+        return false unless other.is_a?(BreakExpressionNode)
+
+        @value == other.value
+      end
+
+      # @override
+      #: (?Integer indent) -> String
+      def to_s(indent = 0)
+        buff = String.new
+        buff << "#{INDENT_UNIT * indent}break"
+        buff << " #{@value}" if @value
+
+        buff
+      end
+
+      # @override
+      #: (?Integer indent) -> String
+      def inspect(indent = 0)
+        buff = String.new
+        buff << "#{INDENT_UNIT * indent}(break"
+        buff << " #{@value.inspect}" if @value
+        buff << ')'
+
+        buff
+      end
+    end
+
+    # Represents a next like `next`, `next 1 + 5 * a`
+    class NextExpressionNode < ExpressionNode
+      #: ExpressionNode?
+      attr_reader :value
+
+      #: (?value: ExpressionNode?, ?span: Span) -> void
+      def initialize(value: nil, span: Span::ZERO)
+        @span = span
+        @value = value
+      end
+
+      #: (Object other) -> bool
+      def ==(other)
+        return false unless other.is_a?(NextExpressionNode)
+
+        @value == other.value
+      end
+
+      # @override
+      #: (?Integer indent) -> String
+      def to_s(indent = 0)
+        buff = String.new
+        buff << "#{INDENT_UNIT * indent}next"
+        buff << " #{@value}" if @value
+
+        buff
+      end
+
+      # @override
+      #: (?Integer indent) -> String
+      def inspect(indent = 0)
+        buff = String.new
+        buff << "#{INDENT_UNIT * indent}(next"
+        buff << " #{@value.inspect}" if @value
+        buff << ')'
+
+        buff
+      end
+    end
+
     # Represents an if expression like `if foo; a = 5; end`
     class IfExpressionNode < ExpressionNode
       #: ExpressionNode
@@ -438,6 +610,64 @@ module MiniRuby
           end
           buff << ')'
         end
+
+        buff << ')'
+        buff
+      end
+    end
+
+    # Represents an unless expression like `unless foo; a = 5; end`
+    class UnlessExpressionNode < ExpressionNode
+      #: ExpressionNode
+      attr_reader :condition
+
+      #: Array[StatementNode]
+      attr_reader :then_body
+
+      #: (condition: ExpressionNode, then_body: Array[StatementNode], ?span: Span) -> void
+      def initialize(condition:, then_body:, span: Span::ZERO)
+        @span = span
+        @condition = condition
+        @then_body = then_body
+      end
+
+      #: (Object other) -> bool
+      def ==(other)
+        return false unless other.is_a?(UnlessExpressionNode)
+
+        @condition == other.condition &&
+          @then_body == other.then_body
+      end
+
+      # @override
+      #: (?Integer indent) -> String
+      def to_s(indent = 0)
+        buff = String.new
+        indent_str = INDENT_UNIT * indent
+        buff << "#{indent_str}unless #{@condition}\n"
+
+        @then_body.each do |stmt|
+          buff << stmt.to_s(indent + 1)
+        end
+
+        buff << "#{indent_str}end"
+
+        buff
+      end
+
+      # @override
+      #: (?Integer indent) -> String
+      def inspect(indent = 0)
+        buff = String.new
+        buff << "#{INDENT_UNIT * indent}(if"
+
+        buff << "\n" << @condition.inspect(indent + 1)
+
+        buff << "\n#{INDENT_UNIT * (indent + 1)}(then"
+        @then_body.each do |stmt|
+          buff << "\n" << stmt.inspect(indent + 2)
+        end
+        buff << ')'
 
         buff << ')'
         buff
