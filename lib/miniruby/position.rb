@@ -6,24 +6,24 @@ module MiniRuby
   class Position
     extend T::Sig
 
-    sig { returns(Integer) }
+    #: Integer
     attr_reader :char_index
 
-    sig { params(char_index: Integer).void }
+    #: (Integer char_index) -> void
     def initialize(char_index)
       @char_index = char_index
     end
 
     ZERO = Position.new(0)
 
-    sig { params(other: Object).returns(T::Boolean) }
+    #: (Object other) -> bool
     def ==(other)
       return false unless other.is_a?(Position)
 
       @char_index == other.char_index
     end
 
-    sig { returns(String) }
+    #: -> String
     def inspect
       "P(#{char_index.inspect})"
     end

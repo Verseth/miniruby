@@ -253,7 +253,6 @@ module MiniRuby
           Opcode::GET_LOCAL, 1,
           Opcode::NOT,
           Opcode::LOOP, 22,
-
           Opcode::RETURN,
         ),
         value_pool:   [
@@ -351,7 +350,6 @@ module MiniRuby
           # a = b
           Opcode::GET_LOCAL, 2,
           Opcode::SET_LOCAL, 1,
-
           Opcode::RETURN,
         ),
         value_pool:   [

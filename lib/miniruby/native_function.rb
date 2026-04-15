@@ -8,31 +8,25 @@ module MiniRuby
   class NativeFunction
     extend T::Sig
 
-    sig { returns(Symbol) }
+    #: Symbol
     attr_reader :name
 
-    sig { returns(Integer) }
+    #: Integer
     attr_reader :param_count
 
     Func = T.type_alias { T.proc.params(vm: VM, args: T::Array[Object]).returns(Object) }
 
-    sig { returns(Func) }
+    #: Func
     attr_reader :func
 
-    sig do
-      params(
-        name:        Symbol,
-        param_count: Integer,
-        func:        Func,
-      ).void
-    end
+    #: (name: Symbol, ?param_count: Integer) { (?) -> untyped } -> void
     def initialize(name:, param_count: 0, &func)
       @name = name
       @func = func
       @param_count = param_count
     end
 
-    sig { params(vm: VM, args: T::Array[Object]).returns(Object) }
+    #: (VM vm, Array[Object] args) -> Object
     def call(vm, args)
       arg_count = args.length - 1
       if arg_count != @param_count

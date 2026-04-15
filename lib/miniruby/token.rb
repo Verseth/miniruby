@@ -1,7 +1,6 @@
 # typed: strong
 # frozen_string_literal: true
 
-require 'set'
 
 module MiniRuby
   # Represents a single token (word) produced by the lexer.
@@ -12,7 +11,7 @@ module MiniRuby
       extend T::Sig
 
       # Converts a token type into a human-readable string.
-      sig { params(type: Symbol).returns(String) }
+      #: (Symbol type) -> String
       def type_to_string(type)
         case type
         when NONE
@@ -72,37 +71,37 @@ module MiniRuby
       end
     end
 
-    sig { returns(Symbol) }
+    #: Symbol
     attr_reader :type
 
-    sig { returns(T.nilable(String)) }
+    #: String?
     attr_reader :value
 
-    sig { returns(Span) }
+    #: Span
     attr_reader :span
 
-    sig { params(type: Symbol, span: Span, value: T.nilable(String)).void }
+    #: (Symbol type, Span span, ?String? value) -> void
     def initialize(type, span, value = nil)
       @type = type
       @span = span
       @value = value
     end
 
-    sig { params(other: Object).returns(T::Boolean) }
+    #: (Object other) -> bool
     def ==(other)
       return false unless other.is_a?(Token)
 
       type == other.type && value == other.value
     end
 
-    sig { returns(String) }
+    #: -> String
     def inspect
       return "Token(#{type.inspect}, #{span.inspect})" if value.nil?
 
       "Token(#{type.inspect}, #{span.inspect}, #{value.inspect})"
     end
 
-    sig { returns(T::Boolean) }
+    #: -> bool
     def equality_operator?
       case @type
       when EQUAL_EQUAL, NOT_EQUAL
@@ -112,7 +111,7 @@ module MiniRuby
       end
     end
 
-    sig { returns(T::Boolean) }
+    #: -> bool
     def additive_operator?
       case @type
       when PLUS, MINUS
@@ -122,7 +121,7 @@ module MiniRuby
       end
     end
 
-    sig { returns(T::Boolean) }
+    #: -> bool
     def multiplicative_operator?
       case @type
       when STAR, SLASH
@@ -132,7 +131,7 @@ module MiniRuby
       end
     end
 
-    sig { returns(T::Boolean) }
+    #: -> bool
     def comparison_operator?
       case @type
       when GREATER, GREATER_EQUAL, LESS, LESS_EQUAL
@@ -142,13 +141,13 @@ module MiniRuby
       end
     end
 
-    sig { returns(String) }
+    #: -> String
     def type_name
       self.class.type_to_string(@type)
     end
 
     # Converts a token into a human-readable string.
-    sig { returns(String) }
+    #: -> String
     def to_s
       case type
       when NONE
@@ -194,7 +193,7 @@ module MiniRuby
       when FLOAT, INTEGER, IDENTIFIER
         value.to_s
       when STRING
-        T.cast(value.inspect, String)
+        value.inspect #: as String
       else
         t = type.to_s
         return t if KEYWORDS.include?(t)
@@ -209,20 +208,17 @@ module MiniRuby
     HEX_DIGITS = '0123456789abcdefABCDEF'
 
     # Set of all keywords
-    KEYWORDS = T.let(
-      Set[
-        'false',
-        'true',
-        'nil',
-        'if',
-        'while',
-        'return',
-        'end',
-        'else',
-        'self',
-      ],
-      T::Set[String],
-    )
+    KEYWORDS = Set[
+      'false',
+      'true',
+      'nil',
+      'if',
+      'while',
+      'return',
+      'end',
+      'else',
+      'self',
+    ] #: Set[String]
 
     # List of all token types
     # ------------------------

@@ -31,7 +31,7 @@ You can call the `next` method to receive the next token.
 Once the lexing is complete a token of type `:end_of_file` gets returned.
 
 ```rb
-require 'ruby_json_parser'
+require 'miniruby'
 
 lexer = MiniRuby::Lexer.new(<<~RUBY)
   foo = 5
@@ -51,7 +51,7 @@ lexer.next #=> Token(:end_of_file)
 There is a simplified API that lets you generate an array of all tokens.
 
 ```rb
-require 'ruby_json_parser'
+require 'miniruby'
 
 MiniRuby.lex(<<~RUBY)
   foo = 5
@@ -69,7 +69,7 @@ with source code.
 It returns `MiniRuby::Parser::Result` which contains the produced AST (Abstract Syntax Tree) and the list of encountered errors.
 
 ```rb
-require 'ruby_json_parser'
+require 'miniruby'
 
 MiniRuby.parse(<<~RUBY)
   a = 0
@@ -185,7 +185,7 @@ It returns `MiniRuby::BytecodeFunction`, an executable chunk of bytecode.
 
 
 ```rb
-require 'ruby_json_parser'
+require 'miniruby'
 
 func = MiniRuby.compile(<<~RUBY)
   a = 0
@@ -226,7 +226,7 @@ func.class #=> MiniRuby::BytecodeFunction
 You can also use the compiler directly to compile an already produced AST.
 
 ```rb
-require 'ruby_json_parser'
+require 'miniruby'
 
 parse_result = MiniRuby.parse(<<~RUBY)
   a = 0
@@ -276,7 +276,7 @@ It returns the last computed value in the bytecode.
 
 
 ```rb
-require 'ruby_json_parser'
+require 'miniruby'
 
 result = MiniRuby.interpret(<<~RUBY)
   a = 0
@@ -297,7 +297,7 @@ result == 6 #=> true
 You can also use the VM directly to interpret an already produced piece of bytecode.
 
 ```rb
-require 'ruby_json_parser'
+require 'miniruby'
 
 func = MiniRuby::Compiler.compile_source(<<~RUBY)
   a = 0

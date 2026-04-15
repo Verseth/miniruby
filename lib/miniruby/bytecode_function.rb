@@ -12,47 +12,39 @@ module MiniRuby
     class << self
       extend T::Sig
 
-      sig { params(bytes: T::Array[Integer]).returns(String) }
+      #: (Array[Integer] bytes) -> String
       def pack_instructions!(bytes)
         bytes.pack('c*')
       end
 
-      sig { params(bytes: Integer).returns(String) }
+      #: (*Integer bytes) -> String
       def pack_instructions(*bytes)
         pack_instructions!(bytes)
       end
 
-      sig { params(instructions: String).returns(T::Array[Integer]) }
+      #: (String instructions) -> Array[Integer]
       def unpack_instructions(instructions)
-        T.unsafe(instructions.unpack('c*'))
+        instructions.unpack('c*') #: as untyped
       end
     end
 
-    sig { returns(String) }
+    #: String
     attr_reader :name
 
-    sig { returns(String) }
+    #: String
     attr_reader :filename
 
-    sig { returns(Span) }
+    #: Span
     attr_reader :span
 
-    sig { returns(T::Array[Object]) }
+    #: Array[Object]
     attr_reader :value_pool
 
     # A byte-buffer containing instructions
-    sig { returns(String) }
+    #: String
     attr_accessor :instructions
 
-    sig do
-      params(
-        name:         String,
-        filename:     String,
-        instructions: String,
-        value_pool:   T::Array[Object],
-        span:         Span,
-      ).void
-    end
+    #: (?name: String, ?filename: String, ?instructions: String, ?value_pool: Array[Object], ?span: Span) -> void
     def initialize(name: '<main>', filename: '<main>', instructions: String.new.b, value_pool: [], span: Span::ZERO)
       @name = name
       @filename = filename
@@ -61,16 +53,16 @@ module MiniRuby
       @span = span
     end
 
-    ZERO = T.let(new(name: 'zero'), BytecodeFunction)
+    ZERO = new(name: 'zero') #: BytecodeFunction
 
-    sig { params(bytes: T::Array[Integer]).void }
+    #: (Array[Integer] bytes) -> void
     def add_bytes!(bytes)
       bytes.each do |byte|
         @instructions << byte.chr
       end
     end
 
-    sig { params(bytes: Integer).void }
+    #: (*Integer bytes) -> void
     def add_bytes(*bytes)
       add_bytes!(bytes)
     end
@@ -79,7 +71,7 @@ module MiniRuby
 
     # Adds a value to the value pool and returns its index.
     # Throws when the index is larger than 255.
-    sig { params(value: Object).returns(Integer) }
+    #: (Object value) -> Integer
     def add_value(value)
       id = @value_pool.find_index { _1 == value }
       return id if id
@@ -93,12 +85,12 @@ module MiniRuby
       id
     end
 
-    sig { void }
+    #: -> void
     def disassemble_stdout
       disassemble($stdout)
     end
 
-    sig { returns(String) }
+    #: -> String
     def disassemble_string
       buff = StringIO.new
       disassemble(buff)
@@ -106,7 +98,7 @@ module MiniRuby
       buff.string
     end
 
-    sig { params(out: IO).void }
+    #: (IO out) -> void
     def disassemble(out)
       out.puts "== BytecodeFunction #{@name} at: #{@filename} =="
       return if @instructions.length == 0
@@ -125,7 +117,7 @@ module MiniRuby
       end
     end
 
-    sig { params(other: Object).returns(T::Boolean) }
+    #: (Object other) -> bool
     def ==(other)
       return false unless other.is_a?(BytecodeFunction)
 
@@ -135,17 +127,17 @@ module MiniRuby
         @value_pool == other.value_pool
     end
 
-    sig { returns(String) }
+    #: -> String
     def inspect
       disassemble_string
     end
 
     private
 
-    sig { params(out: IO, offset: Integer).returns(Integer) }
+    #: (IO out, Integer offset) -> Integer
     def disassemble_instruction(out, offset)
       out.printf('%04d  ', offset)
-      opcode = T.must @instructions.getbyte(offset)
+      opcode = @instructions.getbyte(offset) #: as !nil
 
       case opcode
       when Opcode::NOOP, Opcode::POP, Opcode::DUP, Opcode::INSPECT_STACK,
@@ -168,13 +160,7 @@ module MiniRuby
       end
     end
 
-    sig do
-      params(
-        out:    IO,
-        name:   String,
-        offset: Integer,
-      ).returns(Integer)
-    end
+    #: (IO out, String name, Integer offset) -> Integer
     def disassemble_one_byte_instruction(out, name, offset)
       dump_bytes(out, offset, 1)
       out.puts(name)
@@ -185,7 +171,7 @@ module MiniRuby
     # instruction can take up.
     MAX_INSTRUCTION_BYTE_COUNT = 3
 
-    sig { params(out: IO, offset: Integer, count: Integer).void }
+    #: (IO out, Integer offset, Integer count) -> void
     def dump_bytes(out, offset, count)
       i = offset
       while i < offset + count
@@ -200,7 +186,7 @@ module MiniRuby
       end
     end
 
-    sig { params(out: IO, offset: Integer, bytes: Integer).returns(T::Boolean) }
+    #: (IO out, Integer offset, Integer bytes) -> bool
     def check_bytes(out, offset, bytes)
       left_bytes = @instructions.length - offset
       if left_bytes < bytes
@@ -213,40 +199,39 @@ module MiniRuby
       true
     end
 
-    sig { params(out: IO, offset: Integer).returns(Integer) }
+    #: (IO out, Integer offset) -> Integer
     def disassemble_numeric_operand(out, offset)
       bytes = 2
       return offset + 1 unless check_bytes(out, offset, 2)
 
-      opcode = T.must @instructions.getbyte(offset)
+      opcode = @instructions.getbyte(offset) #: as !nil
 
       dump_bytes(out, offset, bytes)
       print_opcode(out, opcode)
 
-      a = T.must @instructions.getbyte(offset + 1)
+      a = @instructions.getbyte(offset + 1) #: as !nil
       print_num_field(out, a)
       out.puts
 
       offset + bytes
     end
 
-    sig { params(out: IO, opcode: Integer).void }
+    #: (IO out, Integer opcode) -> void
     def print_opcode(out, opcode)
       out.printf('%-18s', Opcode.name(opcode))
     end
 
-    sig { params(out: IO, n: Integer).void }
+    #: (IO out, Integer n) -> void
     def print_num_field(out, n)
       out.printf('%-16d', n)
     end
 
-
-    sig { params(out: IO, offset: Integer).returns(Integer) }
+    #: (IO out, Integer offset) -> Integer
     def disassemble_value(out, offset)
-      opcode = T.must @instructions.getbyte(offset)
+      opcode = @instructions.getbyte(offset) #: as !nil
       return offset + 1 unless check_bytes(out, offset, 2)
 
-      value_index = T.must @instructions.getbyte(offset + 1)
+      value_index = @instructions.getbyte(offset + 1) #: as !nil
 
       dump_bytes(out, offset, 2)
       print_opcode(out, opcode)

@@ -17,30 +17,31 @@ module MiniRuby
     class << self
       extend T::Sig
 
-      sig { params(source: String).returns(T::Array[Token]) }
+      #: (String source) -> Array[Token]
       def lex(source)
         new(source).to_a
       end
     end
 
-    sig { params(source: String).void }
+    #: (String source) -> void
     def initialize(source)
       @source = source
 
       # offset of the first character of the current lexeme
-      @start_cursor = T.let(0, Integer)
+      @start_cursor = 0 #: Integer
       # offset of the next character
-      @cursor = T.let(0, Integer)
+      @cursor = 0 #: Integer
     end
 
-    sig { returns(Token) }
+    #: -> Token
     def next
       return Token.new(Token::END_OF_FILE, Span.new(Position.new(0), Position.new(0))) unless more_tokens?
 
       scan_token
     end
 
-    sig { override.params(block: T.nilable(T.proc.params(arg0: Token).void)).returns(T.untyped) }
+    # @override
+    #: ?{ (Token arg0) -> void } -> untyped
     def each(&block)
       return enum_for(T.must(__method__)) unless block
 
@@ -56,17 +57,17 @@ module MiniRuby
 
     private
 
-    sig { returns(T::Boolean) }
+    #: -> bool
     def more_tokens?
       @cursor < @source.length
     end
 
-    sig { params(type: Symbol).returns(Token) }
+    #: (Symbol type) -> Token
     def token_with_consumed_value(type)
       token(type, token_value)
     end
 
-    sig { params(type: Symbol, value: T.nilable(String)).returns(Token) }
+    #: (Symbol type, ?String? value) -> Token
     def token(type, value = nil)
       span = Span.new(Position.new(@start_cursor), Position.new(@cursor - 1))
       @start_cursor = @cursor
@@ -74,12 +75,12 @@ module MiniRuby
     end
 
     # Returns the current token value.
-    sig { returns(String) }
+    #: -> String
     def token_value
-      T.must @source[@start_cursor...@cursor]
+      @source[@start_cursor...@cursor] #: as !nil
     end
 
-    sig { returns([String, T::Boolean]) }
+    #: -> [String, bool]
     def advance_char
       return '', false unless more_tokens?
 
@@ -89,14 +90,14 @@ module MiniRuby
       [char, true]
     end
 
-    sig { returns(String) }
+    #: -> String
     def next_char
-      T.must @source[@cursor]
+      @source[@cursor] #: as !nil
     end
 
     # Gets the next UTF-8 encoded character
     # without incrementing the cursor.
-    sig { returns(String) }
+    #: -> String
     def peek_char
       return '' unless more_tokens?
 
@@ -105,7 +106,7 @@ module MiniRuby
     end
 
     # Advance the next `n` characters
-    sig { params(n: Integer).returns(T::Boolean) }
+    #: (Integer n) -> bool
     def advance_chars(n)
       n.times do
         _, ok = advance_char
@@ -118,7 +119,7 @@ module MiniRuby
     # Checks if the given character matches
     # the next UTF-8 encoded character in source code.
     # If they match, the cursor gets incremented.
-    sig { params(char: String).returns(T::Boolean) }
+    #: (String char) -> bool
     def match_char(char)
       return false unless more_tokens?
 
@@ -131,7 +132,7 @@ module MiniRuby
     end
 
     # Consumes the next character if it's from the valid set.
-    sig { params(valid_chars: String).returns(T::Boolean) }
+    #: (String valid_chars) -> bool
     def match_chars(valid_chars)
       return false unless more_tokens?
 
@@ -145,18 +146,18 @@ module MiniRuby
     end
 
     # Rewinds the cursor back n chars.
-    sig { params(n: Integer).void }
+    #: (Integer n) -> void
     def backup_chars(n)
       @cursor -= n
     end
 
     # Skips the current accumulated token.
-    sig { void }
+    #: -> void
     def skip_token
       @start_cursor = @cursor
     end
 
-    sig { returns(Token) }
+    #: -> Token
     def scan_token
       loop do
         char, ok = advance_char
@@ -214,12 +215,12 @@ module MiniRuby
       end
     end
 
-    sig { params(char: String).returns(T::Boolean) }
+    #: (String char) -> bool
     def identifier_char?(char)
       char.match?(/[[:alpha:][:digit:]_]/)
     end
 
-    sig { returns(Token) }
+    #: -> Token
     def scan_identifier
       advance_char while identifier_char?(peek_char)
 
@@ -229,7 +230,7 @@ module MiniRuby
       token(Token::IDENTIFIER, value)
     end
 
-    sig { void }
+    #: -> void
     def consume_digits
       loop do
         p = peek_char
@@ -241,9 +242,9 @@ module MiniRuby
     end
 
     # Checks if the next `n` characters are from the valid set.
-    sig { params(valid_chars: String, n: Integer).returns(T::Boolean) }
+    #: (String valid_chars, Integer n) -> bool
     def accept_chars(valid_chars, n)
-      result = T.let(true, T::Boolean)
+      result = true #: bool
       n.times do
         unless match_chars(valid_chars)
           result = false
@@ -256,7 +257,7 @@ module MiniRuby
       result
     end
 
-    sig { params(init_char: String).returns(Token) }
+    #: (String init_char) -> Token
     def scan_number(init_char)
       if init_char == '0'
         p = peek_char
@@ -319,7 +320,7 @@ module MiniRuby
       token_with_consumed_value(Token::INTEGER)
     end
 
-    sig { void }
+    #: -> void
     def swallow_rest_of_the_string
       loop do
         # swallow the rest of the string
@@ -328,7 +329,7 @@ module MiniRuby
       end
     end
 
-    sig { returns(Token) }
+    #: -> Token
     def scan_string
       value_buffer = String.new
       loop do
@@ -368,7 +369,7 @@ module MiniRuby
           end
 
           advance_chars(4)
-          last4 = T.must @source[@cursor - 4...@cursor]
+          last4 = @source[(@cursor - 4)...@cursor] #: as !nil
           value_buffer << [last4.hex].pack('U')
         else
           swallow_rest_of_the_string

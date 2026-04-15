@@ -7,24 +7,24 @@ module MiniRuby
   class Parser::Result
     extend T::Sig
 
-    sig { returns(AST::ProgramNode) }
+    #: AST::ProgramNode
     attr_reader :ast
 
-    sig { returns(T::Array[String]) }
+    #: Array[String]
     attr_reader :errors
 
-    sig { params(ast: AST::ProgramNode, errors: T::Array[String]).void }
+    #: (AST::ProgramNode ast, Array[String] errors) -> void
     def initialize(ast, errors)
       @ast = ast
       @errors = errors
     end
 
-    sig { returns(T::Boolean) }
+    #: -> bool
     def err?
       @errors.any?
     end
 
-    sig { returns(String) }
+    #: -> String
     def inspect
       buff = String.new
       buff << "<#{self.class}>\n"

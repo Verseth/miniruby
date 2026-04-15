@@ -6,13 +6,13 @@ module MiniRuby
   class Span
     extend T::Sig
 
-    sig { returns(Position) }
+    #: Position
     attr_reader :start
 
-    sig { returns(Position) }
+    #: Position
     attr_reader :end
 
-    sig { params(start: Position, end_pos: Position).void }
+    #: (Position start, Position end_pos) -> void
     def initialize(start, end_pos)
       @start = start
       @end = end_pos
@@ -21,19 +21,19 @@ module MiniRuby
     ZERO = Span.new(Position::ZERO, Position::ZERO)
 
     # Create a new span that includes the area of two spans.
-    sig { params(other: Span).returns(Span) }
+    #: (Span other) -> Span
     def join(other)
       Span.new(@start, other.end)
     end
 
-    sig { params(other: Object).returns(T::Boolean) }
+    #: (Object other) -> bool
     def ==(other)
       return false unless other.is_a?(Span)
 
       @start == other.start && @end == other.end
     end
 
-    sig { returns(String) }
+    #: -> String
     def inspect
       "S(#{@start.inspect}, #{@end.inspect})"
     end

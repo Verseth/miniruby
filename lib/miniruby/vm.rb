@@ -13,42 +13,30 @@ module MiniRuby
     class << self
       extend T::Sig
 
-      sig do
-        params(
-          bytecode: BytecodeFunction,
-          stdout:   IO,
-          stdin:    IO,
-        ).returns(Object)
-      end
+      #: (BytecodeFunction bytecode, ?stdout: IO, ?stdin: IO) -> Object
       def run(bytecode, stdout: $stdout, stdin: $stdin)
         vm = new(bytecode, stdout:, stdin:)
         vm.run
         vm.stack_top
       end
 
-      sig { params(source: String, name: String, filename: String, stdout: IO, stdin: IO).returns(Object) }
+      #: (String source, ?name: String, ?filename: String, ?stdout: IO, ?stdin: IO) -> Object
       def interpret(source, name: '<main>', filename: '<main>', stdout: $stdout, stdin: $stdin)
         bytecode = Compiler.compile_source(source, name:, filename:)
         run(bytecode, stdout:, stdin:)
       end
     end
 
-    sig { returns BytecodeFunction }
+    #: BytecodeFunction
     attr_reader :bytecode
 
-    sig { returns IO }
+    #: IO
     attr_reader :stdout
 
-    sig { returns IO }
+    #: IO
     attr_reader :stdin
 
-    sig do
-      params(
-        bytecode: BytecodeFunction,
-        stdout:   IO,
-        stdin:    IO,
-      ).void
-    end
+    #: (BytecodeFunction bytecode, ?stdout: IO, ?stdin: IO) -> void
     def initialize(bytecode, stdout: $stdout, stdin: $stdin)
       # the currently executed chunk of bytecode
       @bytecode = bytecode
@@ -58,25 +46,25 @@ module MiniRuby
       @stdin = stdin
 
       # The value stack
-      @stack = T.let([Object.new], T::Array[Object])
+      @stack = [Object.new] #: Array[Object]
       # Instruction pointer -- points to the next bytecode instruction
-      @ip = T.let(0, Integer)
+      @ip = 0 #: Integer
       # Stack pointer -- points to the offset on the stack where the next value will be pushed to
-      @sp = T.let(1, Integer)
+      @sp = 1 #: Integer
     end
 
     Func = T.type_alias { T.proc.params(vm: VM, args: T::Array[Object]).returns(Object) }
 
-    @functions = T.let({}, T::Hash[Symbol, NativeFunction])
+    @functions = {} #: Hash[Symbol, NativeFunction]
     class << self
       extend T::Sig
 
-      sig { params(name: Symbol, param_count: Integer, func: NativeFunction::Func).void }
+      #: (Symbol name, ?Integer param_count) { (?) -> untyped } -> void
       def define(name, param_count = 0, &func)
         @functions[name] = NativeFunction.new(name:, param_count:, &func)
       end
 
-      sig { returns T::Hash[Symbol, NativeFunction] }
+      #: Hash[Symbol, NativeFunction]
       attr_reader :functions
     end
 
@@ -93,7 +81,7 @@ module MiniRuby
       T.unsafe(args[1]).length
     end
 
-    sig { void }
+    #: -> void
     def run
       while true
         opcode = read_byte
@@ -112,45 +100,45 @@ module MiniRuby
           inspect_stack()
         when Opcode::ADD
           right = pop()
-          left = T.unsafe(pop())
+          left = pop() #: as untyped
           push(left + right)
         when Opcode::SUBTRACT
           right = pop
-          left = T.unsafe(pop)
+          left = pop #: as untyped
           push(left - right)
         when Opcode::MULTIPLY
           right = pop
-          left = T.unsafe(pop)
+          left = pop #: as untyped
           push(left * right)
         when Opcode::DIVIDE
           right = pop
-          left = T.unsafe(pop)
+          left = pop #: as untyped
           push(left / right)
         when Opcode::EQUAL
           right = pop
-          left = T.unsafe(pop)
+          left = pop #: as untyped
           push(left == right)
         when Opcode::GREATER
           right = pop
-          left = T.unsafe(pop)
+          left = pop #: as untyped
           push(left > right)
         when Opcode::GREATER_EQUAL
           right = pop
-          left = T.unsafe(pop)
+          left = pop #: as untyped
           push(left >= right)
         when Opcode::LESS
           right = pop
-          left = T.unsafe(pop)
+          left = pop #: as untyped
           push(left < right)
         when Opcode::LESS_EQUAL
           right = pop
-          left = T.unsafe(pop)
+          left = pop #: as untyped
           push(left <= right)
         when Opcode::NOT
           value = pop
           push(!value)
         when Opcode::NEGATE
-          value = T.unsafe(pop)
+          value = pop #: as untyped
           push(-value)
         when Opcode::LOAD_VALUE
           index = read_byte
@@ -179,9 +167,9 @@ module MiniRuby
           @ip += offset
         when Opcode::CALL
           index = read_byte
-          call_info = T.cast(get_value(index), CallInfo)
+          call_info = get_value(index) #: as CallInfo
           to_pop = call_info.arg_count + 1
-          args = T.must @stack[@sp - to_pop...@sp]
+          args = @stack[(@sp - to_pop)...@sp] #: as !nil
           result = self.class.functions.fetch(call_info.name).call(self, args)
           args.each { pop }
           push(result)
@@ -193,53 +181,53 @@ module MiniRuby
       end
     end
 
-    sig { void }
+    #: -> void
     def inspect_stack
       @stdout.print("#{@stack[...@sp].inspect}\n")
     end
 
-    sig { returns Object }
+    #: -> Object
     def stack_top
       @stack[@sp - 1]
     end
 
     private
 
-    sig { params(index: Integer).returns(Object) }
+    #: (Integer index) -> Object
     def get_value(index)
       @bytecode.value_pool.fetch(index)
     end
 
-    sig { params(index: Integer).void }
+    #: (Integer index) -> void
     def push_local(index)
       push(get_local(index))
     end
 
-    sig { params(index: Integer).returns(Object) }
+    #: (Integer index) -> Object
     def get_local(index)
       @stack[index]
     end
 
-    sig { params(index: Integer, value: Object).void }
+    #: (Integer index, Object value) -> void
     def set_local(index, value)
       @stack[index] = value
     end
 
-    sig { returns Integer }
+    #: -> Integer
     def read_byte
-      byte = T.must @bytecode.instructions.getbyte(@ip)
+      byte = @bytecode.instructions.getbyte(@ip) #: as !nil
       @ip += 1
 
       byte
     end
 
-    sig { params(value: Object).void }
+    #: (Object value) -> void
     def push(value)
       @stack[@sp] = value
       @sp += 1
     end
 
-    sig { returns(Object) }
+    #: -> Object
     def pop
       @sp -= 1
       val = @stack[@sp]
@@ -248,7 +236,7 @@ module MiniRuby
       val
     end
 
-    sig { returns(Object) }
+    #: -> Object
     def peek
       @stack[@sp - 1]
     end

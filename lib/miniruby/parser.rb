@@ -11,7 +11,7 @@ module MiniRuby
     class << self
       extend T::Sig
 
-      sig { params(source: String).returns(Result) }
+      #: (String source) -> Result
       def parse(source)
         new(source).parse
       end
@@ -19,16 +19,16 @@ module MiniRuby
       private :new
     end
 
-    sig { params(source: String).void }
+    #: (String source) -> void
     def initialize(source)
       # Lexer/Tokenizer that produces tokens
-      @lexer = T.let(Lexer.new(source), Lexer)
+      @lexer = Lexer.new(source) #: Lexer
       # Next token used for predicting productions
-      @lookahead = T.let(Token.new(Token::NONE, Span::ZERO), Token)
-      @errors = T.let([], T::Array[String])
+      @lookahead = Token.new(Token::NONE, Span::ZERO) #: Token
+      @errors = [] #: Array[String]
     end
 
-    sig { returns(Result) }
+    #: -> Result
     def parse
       advance # populate @lookahead
       ast = parse_program
@@ -38,7 +38,7 @@ module MiniRuby
     private
 
     # program = statements
-    sig { returns(AST::ProgramNode) }
+    #: -> AST::ProgramNode
     def parse_program
       statements = parse_statements
 
@@ -51,9 +51,9 @@ module MiniRuby
     end
 
     # statements = statement*
-    sig { params(stop_tokens: Symbol).returns(T::Array[AST::StatementNode]) }
+    #: (*Symbol stop_tokens) -> Array[AST::StatementNode]
     def parse_statements(*stop_tokens)
-      statements = T.let([], T::Array[AST::StatementNode])
+      statements = [] #: Array[AST::StatementNode]
       swallow_statement_separators
 
       while true
@@ -64,13 +64,13 @@ module MiniRuby
     end
 
     # statement = expression_statement
-    sig { returns(AST::StatementNode) }
+    #: -> AST::StatementNode
     def parse_statement
       parse_expression_statement
     end
 
     # expression_statement = expression ("\n" | ";")
-    sig { returns(AST::StatementNode) }
+    #: -> AST::StatementNode
     def parse_expression_statement
       expression = parse_expression
       span = expression.span
@@ -85,13 +85,13 @@ module MiniRuby
     end
 
     # expression = assignment_expression
-    sig { returns(AST::ExpressionNode) }
+    #: -> AST::ExpressionNode
     def parse_expression
       parse_assignment_expression
     end
 
     # assignment_expression = expression "=" assignment_expression | equality_expression
-    sig { returns(AST::ExpressionNode) }
+    #: -> AST::ExpressionNode
     def parse_assignment_expression
       target = parse_equality_expression
       return target unless match(Token::EQUAL)
@@ -107,7 +107,7 @@ module MiniRuby
     end
 
     # equality_expression = equality_expression ("==" | "!=") comparison_expression | comparison_expression
-    sig { returns(AST::ExpressionNode) }
+    #: -> AST::ExpressionNode
     def parse_equality_expression
       left = parse_comparison_expression
 
@@ -129,7 +129,7 @@ module MiniRuby
     end
 
     # comparison_expression = comparison_expression (">" | ">=" | "<" | "<=") additive_expression | additive_expression
-    sig { returns(AST::ExpressionNode) }
+    #: -> AST::ExpressionNode
     def parse_comparison_expression
       left = parse_additive_expression
 
@@ -151,7 +151,7 @@ module MiniRuby
     end
 
     # additive_expression = additive_expression ("+" | "-") multiplicative_expression | multiplicative_expression
-    sig { returns(AST::ExpressionNode) }
+    #: -> AST::ExpressionNode
     def parse_additive_expression
       left = parse_multiplicative_expression
 
@@ -173,7 +173,7 @@ module MiniRuby
     end
 
     # multiplicative_expression = multiplicative_expression ("*" | "/") unary_expression | unary_expression
-    sig { returns(AST::ExpressionNode) }
+    #: -> AST::ExpressionNode
     def parse_multiplicative_expression
       left = parse_unary_expression
 
@@ -195,7 +195,7 @@ module MiniRuby
     end
 
     # unary_expression = function_call | ("!" | "-" | "+") unary_expression
-    sig { returns(AST::ExpressionNode) }
+    #: -> AST::ExpressionNode
     def parse_unary_expression
       if (operator = match(Token::BANG, Token::MINUS, Token::PLUS))
         swallow_newlines
@@ -213,7 +213,7 @@ module MiniRuby
     end
 
     # function_call = IDENTIFIER "(" argument_list ")" | primary_expression
-    sig { returns(AST::ExpressionNode) }
+    #: -> AST::ExpressionNode
     def parse_function_call
       ident = parse_primary_expression
       return ident unless ident.is_a?(AST::IdentifierNode) && match(Token::LPAREN)
@@ -233,7 +233,7 @@ module MiniRuby
       )
     end
 
-    sig { returns(T::Array[AST::ExpressionNode]) }
+    #: -> Array[AST::ExpressionNode]
     def parse_argument_list
       return [] if accept(Token::RPAREN)
 
@@ -251,7 +251,7 @@ module MiniRuby
       args
     end
 
-    sig { returns(AST::ExpressionNode) }
+    #: -> AST::ExpressionNode
     def parse_primary_expression
       case @lookahead.type
       when Token::FALSE
@@ -294,7 +294,7 @@ module MiniRuby
     end
 
     # parenthesized_expression = "(" expression ")"
-    sig { returns AST::ExpressionNode }
+    #: -> AST::ExpressionNode
     def parse_parenthesized_expression
       lparen = advance
       expr = parse_expression
@@ -305,7 +305,7 @@ module MiniRuby
     end
 
     # return_expression = "return" [expression]
-    sig { returns(AST::ReturnExpressionNode) }
+    #: -> AST::ReturnExpressionNode
     def parse_return_expression
       return_token = advance
       if accept(Token::END_OF_FILE, Token::NEWLINE, Token::SEMICOLON)
@@ -319,7 +319,7 @@ module MiniRuby
     end
 
     # if_expression = "if" expression SEPARATOR statements ["else" (expression | SEPARATOR statements)] "end"
-    sig { returns(AST::ExpressionNode) }
+    #: -> AST::ExpressionNode
     def parse_if_expression
       if_token = advance
       condition = parse_expression
@@ -328,7 +328,7 @@ module MiniRuby
       return AST::InvalidNode.new(span: separator.span, token: separator) unless ok
 
       then_body = parse_statements(Token::END_K, Token::ELSE)
-      else_body = T.let(nil, T.nilable(T::Array[MiniRuby::AST::StatementNode]))
+      else_body = nil #: Array[MiniRuby::AST::StatementNode]?
       span = if_token.span
 
       if match(Token::ELSE)
@@ -356,7 +356,7 @@ module MiniRuby
     end
 
     # if_expression = "while" expression SEPARATOR statements "end"
-    sig { returns(AST::ExpressionNode) }
+    #: -> AST::ExpressionNode
     def parse_while_expression
       while_token = advance
       condition = parse_expression
@@ -374,7 +374,7 @@ module MiniRuby
     end
 
     # Move over to the next token.
-    sig { returns(Token) }
+    #: -> Token
     def advance
       previous = @lookahead
       @lookahead = @lexer.next
@@ -384,7 +384,7 @@ module MiniRuby
     end
 
     # Add the content of an error token to the syntax error list.
-    sig { params(err: Token).void }
+    #: (Token err) -> void
     def handle_error_token(err)
       msg = err.value
       return unless msg
@@ -393,14 +393,14 @@ module MiniRuby
     end
 
     # Register a syntax error
-    sig { params(err: String).void }
+    #: (String err) -> void
     def add_error(err)
       @errors << err
     end
 
     # Checks if the next token matches any of the given types,
     # if so it gets consumed.
-    sig { params(token_types: Symbol).returns(T.nilable(Token)) }
+    #: (*Symbol token_types) -> Token?
     def match(*token_types)
       token_types.each do |type|
         return advance if accept(type)
@@ -410,13 +410,13 @@ module MiniRuby
     end
 
     # Checks whether the next token matches any the specified types.
-    sig { params(token_types: Symbol).returns(T::Boolean) }
+    #: (*Symbol token_types) -> bool
     def accept(*token_types)
       accept!(token_types)
     end
 
     # Checks whether the next token matches any the specified types.
-    sig { params(token_types: T::Array[Symbol]).returns(T::Boolean) }
+    #: (Array[Symbol] token_types) -> bool
     def accept!(token_types)
       token_types.each do |type|
         return true if @lookahead.type == type
@@ -425,7 +425,7 @@ module MiniRuby
       false
     end
 
-    sig { params(token_types: Symbol).returns([Token, T::Boolean]) }
+    #: (*Symbol token_types) -> [Token, bool]
     def consume(*token_types)
       return advance, false if @lookahead.type == Token::ERROR
 
@@ -433,14 +433,15 @@ module MiniRuby
         return advance, true
       end
 
-      msg = token_types.map { Token.type_to_string(_1) }.join(' or ')
+      msg = token_types.map { Token.type_to_string(_1) }
+                       .join(' or ')
       error_expected(msg)
       [advance, false]
     end
 
     # Adds an error which tells the user that another type of token
     # was expected.
-    sig { params(expected: String).void }
+    #: (String expected) -> void
     def error_expected(expected)
       return if @lookahead.type == Token::ERROR
 
@@ -448,19 +449,15 @@ module MiniRuby
     end
 
     # Accept and ignore any number of consecutive newline tokens.
-    sig { void }
+    #: -> void
     def swallow_newlines
-      while true
-        break unless match(Token::NEWLINE)
-      end
+      break unless match(Token::NEWLINE) while true # rubocop:disable Style/NestedModifier
     end
 
     # Accept and ignore any number of consecutive newline or semicolon tokens.
-    sig { void }
+    #: -> void
     def swallow_statement_separators
-      while true
-        break unless match(Token::NEWLINE, Token::SEMICOLON)
-      end
+      break unless match(Token::NEWLINE, Token::SEMICOLON) while true # rubocop:disable Style/NestedModifier
     end
 
   end
