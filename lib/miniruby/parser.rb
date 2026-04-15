@@ -409,7 +409,7 @@ module MiniRuby
     #: -> AST::ReturnExpressionNode
     def parse_return_expression
       return_token = advance
-      if accept(Token::END_OF_FILE, Token::NEWLINE, Token::SEMICOLON)
+      if accept(Token::END_OF_FILE, Token::NEWLINE, Token::SEMICOLON, Token::IF, Token::UNLESS)
         return AST::ReturnExpressionNode.new(span: return_token.span)
       end
 
@@ -423,7 +423,7 @@ module MiniRuby
     #: -> AST::BreakExpressionNode
     def parse_break_expression
       break_token = advance
-      if accept(Token::END_OF_FILE, Token::NEWLINE, Token::SEMICOLON)
+      if accept(Token::END_OF_FILE, Token::NEWLINE, Token::SEMICOLON, Token::IF, Token::UNLESS)
         return AST::BreakExpressionNode.new(span: break_token.span)
       end
 
@@ -437,7 +437,7 @@ module MiniRuby
     #: -> AST::NextExpressionNode
     def parse_next_expression
       next_token = advance
-      if accept(Token::END_OF_FILE, Token::NEWLINE, Token::SEMICOLON)
+      if accept(Token::END_OF_FILE, Token::NEWLINE, Token::SEMICOLON, Token::IF, Token::UNLESS)
         return AST::NextExpressionNode.new(span: next_token.span)
       end
 

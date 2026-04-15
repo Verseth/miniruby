@@ -1,5 +1,8 @@
 ## [Unreleased]
 
+## [0.4.1] - 2026-04-16
+- Fix parsing of `return if foo`
+
 ## [0.4.0] - 2026-04-16
 - Add new parser capabilities:
   - Add raw strings `'foo\nbar'`
